@@ -1,15 +1,15 @@
 from ttkbootstrap import Frame, Button
 
-from model.controller import Controller
+from model.router import Router
 
 
 class ButtonBar(Frame):
     '''Implementiert die seitliche Buttonleiste mit den Hauptfunktionen'''
 
-    def __init__(self, master, controller: Controller) -> None:
+    def __init__(self, master, router: Router) -> None:
         super().__init__(master)
 
-        self.controller = controller
+        self.router = router
         self._build_ui()
         self._register_bindings()
 
@@ -25,6 +25,6 @@ class ButtonBar(Frame):
     def _register_bindings(self):
         '''Registriert Listener usw'''
         self.btn_importseite.configure(
-            command=self.controller.zeige_import_frame)
+            command=self.router.zeige_import_frame)
 
-        self.btn_auswertungen.configure(command=self.controller.zeige_auswertungen_frame)
+        self.btn_auswertungen.configure(command=self.router.zeige_auswertungen_frame)

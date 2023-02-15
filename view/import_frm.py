@@ -1,14 +1,16 @@
+from tkinter import END
 from ttkbootstrap import Frame, LabelFrame, Button, Label, Entry
-from model.controller import Controller
+from ttkbootstrap.scrolled import ScrolledText
+from model.router import Router, RoutingEvent
 
 
 class ImportFrame(Frame):
     '''Implementiert einen Frame, der die Funktionen zum Import von Daten anbietet'''
 
-    def __init__(self, master, controller: Controller) -> None:
+    def __init__(self, master, router: Router) -> None:
         super().__init__(master)
 
-        self.controller = controller
+        self.router = router
         self._build_ui()
         self._register_bindings()
 
@@ -18,15 +20,12 @@ class ImportFrame(Frame):
         self._frm_import = LabelFrame(self, text='Importfunktionen')
         self._frm_import.pack(fill='both', expand=True)
 
-        self._frm_import.columnconfigure(0, weight=1)
-        self._frm_import.columnconfigure(1, weight=1)
-
         self.lbl_headline = Label(
             self._frm_import, text='Letzter Import:', bootstyle='primary')
         self.lbl_headline.grid(row=0, column=1, sticky='WE', padx=10, pady=10)
 
         self.btn_imp_kassenjournal = Button(
-            self._frm_import, text='Kassenjournal', bootstyle='secondary')
+            self._frm_import, text='Kassenjournal importieren', bootstyle='secondary')
         self.btn_imp_kassenjournal.grid(
             row=1, column=0, sticky='WE', padx=10, pady=10)
 
@@ -35,11 +34,28 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_kassenjournal.grid(
             row=1, column=1, sticky='WE', padx=10, pady=10)
 
+        self._frm_status = LabelFrame(self, text='Importstatus')
+        self._frm_status.pack(fill='both', expand=True)
+        self._frm_status.columnconfigure(1, weight=1)
+
+        self.fld_msg = ScrolledText(
+            self._frm_status, height=10, width=120, state='disabled')
+        self.fld_msg.grid(row=1, column=0, columnspan=2,
+                          sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
+
     def _register_bindings(self) -> None:
         '''registriert die Events'''
         self.btn_imp_kassenjournal.configure(
-            command=lambda: self.controller.import_kassenjournal())
+            command=lambda: self.router.import_kassenjournal())
+
+        self.router.register_listener(RoutingEvent.EVT_LOG_MESSAGE, lambda msg: self.log_message(msg))
 
     def show(self) -> None:
         '''Bringt den Frame in den Vordergrund'''
         self.tkraise()
+
+    def log_message(self, msg: str) -> None:
+        '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
+        self.fld_msg.text.configure(state='normal')
+        self.fld_msg.text.insert(END, msg + '\n')
+        self.fld_msg.text.configure(state='disabled')

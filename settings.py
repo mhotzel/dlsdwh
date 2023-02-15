@@ -2,7 +2,9 @@ from configparser import ConfigParser
 import locale
 import os
 from pathlib import Path
+import sqlite3
 from tkinter.filedialog import asksaveasfilename
+from model import ddl_kassenjournal
 
 BASEDIR = str(Path(__file__).parent)
 IMGDIR = str(Path(BASEDIR) / 'res' / 'img')
@@ -53,9 +55,18 @@ def get_dbconfig() -> str:
     if not filename:
         return None
 
-    cfg_parser['datenbank']['dbfile'] = filename
+    cfg_parser['datenbank']['dbfile'] = str(Path(filename).absolute())
 
     with open(CONFIG_FILE, mode='w') as cfgfile:
         cfg_parser.write(cfgfile)
     
     return filename
+
+def create_tables() -> None:
+    dbconn = sqlite3.connect(get_dbconfig())
+
+    with dbconn:
+        cur = dbconn.cursor()
+        for sql in ddl_kassenjournal.SQL:
+            cur.execute(sql)
+        cur.close()

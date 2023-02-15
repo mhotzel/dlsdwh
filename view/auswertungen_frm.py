@@ -1,14 +1,14 @@
 from ttkbootstrap import Frame, LabelFrame, Label
-from model.controller import Controller
+from model.router import Router
 
 
 class AuswertungenFrame(Frame):
     '''Implementiert einen Frame, der die Funktionen zum Auswerten von Daten anbietet'''
 
-    def __init__(self, master, controller: Controller) -> None:
+    def __init__(self, master, router: Router) -> None:
         super().__init__(master)
 
-        self.controller = controller
+        self.router = router
         self._build_ui()
         self._register_bindings()
 

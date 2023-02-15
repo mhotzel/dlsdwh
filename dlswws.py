@@ -1,9 +1,16 @@
+from configparser import ConfigParser
 from tkinter.messagebox import showerror
 
-from model.controller import Controller
-from settings import CONFIG_FILE, IMGDIR
-from settings import check_configfile, get_dbconfig, set_highdpi, set_lang
+from settings import (CONFIG_FILE, check_configfile, create_tables,
+                      get_dbconfig, set_highdpi, set_lang)
 from view.main_window import MainWindow
+
+
+def get_config() -> ConfigParser:
+    '''liest die Konfiguration und gibt diese zurück'''
+    cfg_parser = ConfigParser()
+    cfg_parser.read(CONFIG_FILE)
+    return cfg_parser
 
 
 def main() -> None:
@@ -16,10 +23,9 @@ def main() -> None:
         showerror(title='Konfigurationsfehler',
                   message='Es wurde keine Datenbank ausgewählt. Deshalb wird die Anwendung nun beendet')
         return
+    create_tables()
 
-    controller = Controller()
-    main_win = MainWindow(controller)
-    main_win.set_status_message(f"Datenbankdatei: '{dbfile}'")
+    main_win = MainWindow(get_config())
     main_win.mainloop()
 
 
