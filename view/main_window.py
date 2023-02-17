@@ -1,10 +1,12 @@
 from configparser import ConfigParser
+from datetime import datetime
 from pathlib import Path
 from tkinter import StringVar
 
-from ttkbootstrap import Label, Separator, Window
+from ttkbootstrap import Label, Separator, Window, Combobox
 
-from model.router import Router, RoutingEvent
+from model.db_manager import DbManager
+from model.log_level import LogLevel
 from settings import IMGDIR
 from view.auswertungen_frm import AuswertungenFrame
 from view.button_bar import ButtonBar
@@ -18,24 +20,23 @@ class MainWindow(Window):
         super().__init__(
             title='DLS Warenwirtschaft',
             themename='litera',
-            #size=(700, 500),
+            # size=(700, 500),
             iconphoto=Path(IMGDIR) / 'logo.png'
         )
 
         self.cfg_parser = cfg
         dbfile = cfg['datenbank']['dbfile']
-        self.controller = Router(self, dbfile)
+        self.db_manager = DbManager(dbfile)
+
         self._build_ui()
         self._register_bindings()
-
-        self.set_status_message(f"Verwendete Datenbank: '{dbfile}'")
 
     def _build_ui(self) -> None:
         '''Baut die Oberflaeche'''
         self.rowconfigure(0, weight=1)
         self.columnconfigure(2, weight=1)
 
-        self.button_bar = ButtonBar(self, self.controller)
+        self.button_bar = ButtonBar(self, self)
         self.button_bar.grid(row=0, column=0, padx=10, pady=10, sticky='WNS')
 
         self.buttonbar_sep = Separator(self, orient='vertical')
@@ -50,9 +51,9 @@ class MainWindow(Window):
                              ipadx=5, ipady=5, sticky='WE')
 
         self._frames = {
-            StartFrame: StartFrame(self, self.controller),
-            ImportFrame: ImportFrame(self, self.controller),
-            AuswertungenFrame: AuswertungenFrame(self, self.controller)
+            StartFrame: StartFrame(self),
+            ImportFrame: ImportFrame(self, application=self),
+            AuswertungenFrame: AuswertungenFrame(self, application=self)
         }
 
         for _, frm in self._frames.items():
@@ -63,20 +64,29 @@ class MainWindow(Window):
 
     def _register_bindings(self) -> None:
         '''registriert Event Listeners usw'''
-        self.controller.register_listener(
-            RoutingEvent.EVT_ZEIGE_IMPORT_FRAME, lambda: self._frames[ImportFrame].show())
+        self.protocol("WM_DELETE_WINDOW", self._on_closing)
 
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        self.controller.register_listener(
-            RoutingEvent.EVT_ZEIGE_AUSWERTUNGEN_FRAME, lambda: self._frames[AuswertungenFrame].show())
-
-    def on_closing(self) -> None:
+    def _on_closing(self) -> None:
         '''Raumt auf und beendet'''
         self.destroy()
-        self.controller.db_manager.close()
+        self.db_manager.close()
 
-    def set_status_message(self, msg: str, millis: int = 10_000) -> None:
+    def _set_status_message(self, msg: str, millis: int = 10_000) -> None:
         '''Zeigt die Nachricht in der Statusbar für den angegebenen Zeitraum an'''
         self.status_bar_text.set(msg)
         self.after(millis, lambda: self.status_bar_text.set(''))
+
+    def log_message(self, level: LogLevel, message: str) -> None:
+        '''Loggt die uebergebene Nachricht.'''
+
+        ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        msg = f"{ts} - {level.name} - {message}"
+        self._set_status_message(msg)
+
+    def zeige_import_frame(self) -> None:
+        '''Zeigt den Import-Frame an.'''
+        self._frames[ImportFrame].show()
+
+    def zeige_auswertungen_frame(self) -> None:
+        '''Zeigt den Auswertungen-Frame an.'''
+        self._frames[AuswertungenFrame].show()

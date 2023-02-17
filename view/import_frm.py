@@ -1,16 +1,22 @@
 from tkinter import END
 from ttkbootstrap import Frame, LabelFrame, Button, Label, Entry
 from ttkbootstrap.scrolled import ScrolledText
-from model.router import Router, RoutingEvent
+from controller.controller import Controller
+from model.errors import DatenImportError
+from tkinter.messagebox import showwarning
+
+
+from model.job_ctrl_kassenjournal import KjImportJobController
+from model.log_level import LogLevel
 
 
 class ImportFrame(Frame):
     '''Implementiert einen Frame, der die Funktionen zum Import von Daten anbietet'''
 
-    def __init__(self, master, router: Router) -> None:
+    def __init__(self, master, application: Controller) -> None:
         super().__init__(master)
 
-        self.router = router
+        self.application = application
         self._build_ui()
         self._register_bindings()
 
@@ -25,7 +31,7 @@ class ImportFrame(Frame):
         self.lbl_headline.grid(row=0, column=1, sticky='WE', padx=10, pady=10)
 
         self.btn_imp_kassenjournal = Button(
-            self._frm_import, text='Kassenjournal importieren', bootstyle='secondary')
+            self._frm_import, text='Kassenjournal importieren', bootstyle='secondary', command=self.import_kassenjournal)
         self.btn_imp_kassenjournal.grid(
             row=1, column=0, sticky='WE', padx=10, pady=10)
 
@@ -45,10 +51,6 @@ class ImportFrame(Frame):
 
     def _register_bindings(self) -> None:
         '''registriert die Events'''
-        self.btn_imp_kassenjournal.configure(
-            command=lambda: self.router.import_kassenjournal())
-
-        self.router.register_listener(RoutingEvent.EVT_LOG_MESSAGE, lambda msg: self.log_message(msg))
 
     def show(self) -> None:
         '''Bringt den Frame in den Vordergrund'''
@@ -59,3 +61,17 @@ class ImportFrame(Frame):
         self.fld_msg.text.configure(state='normal')
         self.fld_msg.text.insert(END, msg + '\n')
         self.fld_msg.text.configure(state='disabled')
+
+    def import_kassenjournal(self) -> None:
+        '''Importiert das Kassenjournal'''
+
+        try:
+            kj_job_ctrl = KjImportJobController()
+            kj_job_ctrl.importfile_ermitteln()
+            # kj_job_ctrl.starte_import()
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
