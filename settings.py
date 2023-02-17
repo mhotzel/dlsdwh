@@ -9,6 +9,7 @@ from model import ddl_kassenjournal
 BASEDIR = str(Path(__file__).parent)
 IMGDIR = str(Path(BASEDIR) / 'res' / 'img')
 CONFIG_FILE = str(Path('~/.dlswws.ini').expanduser().absolute())
+LOG_FILE = str(Path('~/dlswws.log').expanduser().absolute())
 
 def set_lang():
     '''Setzt die Sprache'''

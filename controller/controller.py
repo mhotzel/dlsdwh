@@ -1,4 +1,5 @@
-from typing import Protocol
+from typing import Callable, Protocol
+from model.db_manager import DbManager
 from model.log_level import LogLevel
 
 
@@ -15,3 +16,12 @@ class Controller(Protocol):
 
     def log_message(self, level: LogLevel, message: str) -> None:
         '''Loggt die uebergebene Nachricht.'''
+
+    @property
+    def db_manager(self) -> DbManager:
+        '''liefert den Datenbankmanager'''
+        ...
+
+    def after(self, ms: int, func: Callable = None) -> None:
+        '''Die after-Methode aus dem tkinter Event Loop'''
+        ...

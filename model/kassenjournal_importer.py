@@ -1,3 +1,4 @@
+import sqlite3
 from threading import Thread
 from time import sleep
 from typing import Callable
@@ -5,13 +6,33 @@ import pandas as pd
 from datetime import date, datetime
 from model.db_manager import DbManager
 
+def date_parser(ds: str) -> datetime:
+    return datetime.strptime(ds, '%d.%m.%Y %H:%M:%S')
+
 
 class KassenjournalImporter():
     '''Uebernimmt den Import des Kassenjournals in die Datenbank'''
 
-    def __init__(self, db_man: DbManager) -> None:
-        self.db_man = db_man
+    def __init__(self, conn: sqlite3.Connection, kj_file: str) -> None:
+        self.conn = conn
+        self.kj_file = kj_file
         self._listeners = set()
+        self.df = None
+        self.__df_loaded = False
+        self.__df_written = False
+        self.__target_table_updated = False
+
+    @property
+    def df_loaded(self) -> bool:
+        return self.__df_loaded
+
+    @property
+    def df_written(self) -> bool:
+        return self.__df_written
+
+    @property
+    def target_table_updated(self) -> bool:
+        return self.__target_table_updated
 
     @property
     def kj_file(self) -> str:
@@ -27,12 +48,12 @@ class KassenjournalImporter():
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
 
-        conn = self.db_man.get_connection()
-        cur = conn.cursor()
+        cur = self.conn.cursor()
         cur.execute("DELETE FROM kassenjournal_temp_t")
-        self.df.to_sql('kassenjournal_temp_t', self.db_man.get_connection(),
+        self.df.to_sql('kassenjournal_temp_t', self.conn,
                        if_exists='append', index=False)
         cur.close()
+        self.__df_written = True
 
     def load_file(self) -> None:
         '''
@@ -59,7 +80,7 @@ class KassenjournalImporter():
                 'Infotext': str,
                 'Stornoreferenz': str,
                 'TSE-Info': str
-            }, parse_dates=['Zeitpunkt', 'Beginn']
+            },
         ).rename(columns={
             'Kassen-Nr.': 'kasse_nr',
             'Bon-Nr.': 'bon_nr',
@@ -72,7 +93,7 @@ class KassenjournalImporter():
             'Artikelnummer': 'art_nr',
             'Bezeichnung': 'art_bez',
             'Warengruppe': 'warengruppe',
-            'MwSt.-Satz': 'mwst_kz',
+            'MwSt.-Satz': 'mwst_satz',
             'Mengenfaktor': 'mengenfaktor',
             'Menge': 'menge',
             'Preis': 'preis_einzel',
@@ -86,7 +107,14 @@ class KassenjournalImporter():
             ~df.mengenfaktor.isna(), 1).astype(int)
         df['eintrag_ts'] = datetime.now().isoformat()
         df['pos'] = df[['bon_nr']].groupby('bon_nr').cumcount()
+        df['bon_beginn'] = df['bon_beginn'].where(~df['bon_beginn'].isna(), df['bon_abschluss'])
+        df['kdnr'] = df.kdnr.where(
+            ~df.kdnr.isna(), 0).astype(int)
+
+        df['bon_beginn'] = pd.to_datetime(df['bon_beginn'], format='%d.%m.%Y %H:%M:%S')
+        df['bon_abschluss'] = pd.to_datetime(df['bon_abschluss'], format='%d.%m.%Y %H:%M:%S')
         self.df = df
+        self.__df_loaded = True
 
     def update_table(self) -> None:
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabelle gestartet.'''
@@ -105,8 +133,9 @@ class KassenjournalImporter():
         WHERE kj.bon_nr IS NULL
         '''
 
-        conn = self.db_man.get_connection()
-        with conn:
-            cur = conn.cursor()
+        with self.conn:
+            cur = self.conn.cursor()
             cur.execute(sql)
             cur.close()
+
+        self.__target_table_updated = True

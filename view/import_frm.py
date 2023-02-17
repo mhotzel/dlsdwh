@@ -66,9 +66,10 @@ class ImportFrame(Frame):
         '''Importiert das Kassenjournal'''
 
         try:
-            kj_job_ctrl = KjImportJobController()
+            kj_job_ctrl = KjImportJobController(self.application)
             kj_job_ctrl.importfile_ermitteln()
-            # kj_job_ctrl.starte_import()
+            kj_job_ctrl.starte_import()
+
         except DatenImportError as de:
             showwarning(
                 title='Fehler beim Import',

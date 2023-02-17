@@ -3,11 +3,11 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import StringVar
 
-from ttkbootstrap import Label, Separator, Window, Combobox
+from ttkbootstrap import Label, Separator, Window
 
 from model.db_manager import DbManager
 from model.log_level import LogLevel
-from settings import IMGDIR
+from settings import IMGDIR, LOG_FILE
 from view.auswertungen_frm import AuswertungenFrame
 from view.button_bar import ButtonBar
 from view.import_frm import ImportFrame
@@ -27,6 +27,7 @@ class MainWindow(Window):
         self.cfg_parser = cfg
         dbfile = cfg['datenbank']['dbfile']
         self.db_manager = DbManager(dbfile)
+        self.log_file = open(LOG_FILE, mode='at')
 
         self._build_ui()
         self._register_bindings()
@@ -69,12 +70,11 @@ class MainWindow(Window):
     def _on_closing(self) -> None:
         '''Raumt auf und beendet'''
         self.destroy()
-        self.db_manager.close()
+        self.log_file.close()
 
     def _set_status_message(self, msg: str, millis: int = 10_000) -> None:
         '''Zeigt die Nachricht in der Statusbar für den angegebenen Zeitraum an'''
         self.status_bar_text.set(msg)
-        self.after(millis, lambda: self.status_bar_text.set(''))
 
     def log_message(self, level: LogLevel, message: str) -> None:
         '''Loggt die uebergebene Nachricht.'''
@@ -82,6 +82,7 @@ class MainWindow(Window):
         ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         msg = f"{ts} - {level.name} - {message}"
         self._set_status_message(msg)
+        self.log_file.write(msg + '\n')
 
     def zeige_import_frame(self) -> None:
         '''Zeigt den Import-Frame an.'''
