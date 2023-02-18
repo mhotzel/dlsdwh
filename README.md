@@ -10,3 +10,4 @@ Based on these imports we create reports, for instance:
 - reports, which help our staff to order the right quantities
 - reports for analyzing card transactions, the frequency of customer visits and so on
 
+The application is designed to import pos data from the SCHAPFL Cash register and Pos System.
