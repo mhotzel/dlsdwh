@@ -66,7 +66,6 @@ class ImportJobController():
 
         self.application = application
         self.filenames = None
-        self.done = False
         self.job_owner = job_owner
         self.importer_clzz = importer_clzz
 
@@ -80,6 +79,7 @@ class ImportJobController():
         )
 
         if not self.filenames:
+            self.job_owner.done()
             raise DatenImportError(f'Es wurde keine Eingabedatei gewählt')
 
         self.filenames = sorted(self.filenames)
