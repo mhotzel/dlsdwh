@@ -25,12 +25,12 @@ class KassenjournalImporter():
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
 
-        cur = self.conn.cursor()
-        cur.execute("DELETE FROM kassenjournal_temp_t")
-        self.df.to_sql('kassenjournal_temp_t', self.conn,
-                       if_exists='append', index=False)
-        cur.close()
-        self.__df_written = True
+        with self.conn:
+            cur = self.conn.cursor()
+            cur.execute("DELETE FROM kassenjournal_temp_t")
+            self.df.to_sql('kassenjournal_temp_t', self.conn,
+                        if_exists='append', index=False)
+            cur.close()
 
     def load_file(self) -> None:
         '''
@@ -91,7 +91,6 @@ class KassenjournalImporter():
         df['bon_beginn'] = pd.to_datetime(df['bon_beginn'], format='%d.%m.%Y %H:%M:%S')
         df['bon_abschluss'] = pd.to_datetime(df['bon_abschluss'], format='%d.%m.%Y %H:%M:%S')
         self.df = df
-        self.__df_loaded = True
 
     def post_process(self) -> None:
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabelle gestartet.'''
@@ -114,5 +113,3 @@ class KassenjournalImporter():
             cur = self.conn.cursor()
             cur.execute(sql)
             cur.close()
-
-        self.__target_table_updated = True
