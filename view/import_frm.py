@@ -1,4 +1,4 @@
-from tkinter import END
+from tkinter import END, StringVar
 from tkinter.messagebox import showwarning
 
 from ttkbootstrap import Button, Entry, Frame, Label, LabelFrame
@@ -7,7 +7,7 @@ from ttkbootstrap.scrolled import ScrolledText
 from controller.controller import Controller
 from controller.job_control import ImportJobController
 from model.errors import DatenImportError
-from model.kassenjournal_importer import KassenjournalImporter
+from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
 from model.log_level import LogLevel
 from typing import Type
 
@@ -37,8 +37,9 @@ class ImportFrame(Frame):
         self.btn_imp_kassenjournal.grid(
             row=1, column=0, sticky='WE', padx=10, pady=10)
 
+        self.letzter_imp_kassenjournal = StringVar(self._frm_import)
         self.fld_letzter_imp_kassenjournal = Entry(
-            self._frm_import, state='readonly', width='20')
+            self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_kassenjournal)
         self.fld_letzter_imp_kassenjournal.grid(
             row=1, column=1, sticky='WE', padx=10, pady=10)
 
@@ -57,6 +58,7 @@ class ImportFrame(Frame):
     def show(self) -> None:
         '''Bringt den Frame in den Vordergrund'''
         self.tkraise()
+        self.update_letzter_import()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -66,6 +68,7 @@ class ImportFrame(Frame):
 
     def done(self) -> None:
         '''Wird aufgerufen vom ImportJob, wenn die Verarbeitung abgeschlossen ist'''
+        self.update_letzter_import()
         self.btn_imp_kassenjournal.configure(state='normal')
 
     def import_kassenjournal(self) -> None:
@@ -90,3 +93,14 @@ class ImportFrame(Frame):
                 message=de.args[0]
             )
             self.application.log_message(LogLevel.WARN, de.args[0])
+
+    def update_letzter_import(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports'''
+
+        conn = self.application.db_manager.get_connection()
+        letzte_aenderung = KassenjournalStatus(conn).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_kassenjournal.set(letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_kassenjournal.set('Kein Import vorhanden')
+        conn.close()

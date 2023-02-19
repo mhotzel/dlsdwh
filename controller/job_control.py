@@ -6,7 +6,7 @@ from typing import List, Protocol, Tuple, Type
 from controller.controller import Controller
 from model.db_manager import DbManager
 from model.errors import DatenImportError
-from model.kassenjournal_importer import KassenjournalImporter
+from model.kassenjournal import KassenjournalImporter
 from model.log_level import LogLevel
 
 
