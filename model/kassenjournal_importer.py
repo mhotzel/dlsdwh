@@ -13,36 +13,13 @@ def date_parser(ds: str) -> datetime:
 class KassenjournalImporter():
     '''Uebernimmt den Import des Kassenjournals in die Datenbank'''
 
-    def __init__(self, conn: sqlite3.Connection, kj_file: str) -> None:
+    def __init__(self, conn: sqlite3.Connection, import_file: str) -> None:
         self.conn = conn
-        self.kj_file = kj_file
+        self.import_file = import_file
         self._listeners = set()
         self.df = None
-        self.__df_loaded = False
-        self.__df_written = False
-        self.__target_table_updated = False
 
-    @property
-    def df_loaded(self) -> bool:
-        return self.__df_loaded
-
-    @property
-    def df_written(self) -> bool:
-        return self.__df_written
-
-    @property
-    def target_table_updated(self) -> bool:
-        return self.__target_table_updated
-
-    @property
-    def kj_file(self) -> str:
-        return self._kj_file
-
-    @kj_file.setter
-    def kj_file(self, kj_file: str) -> None:
-        self._kj_file = kj_file
-
-    def write_df(self) -> None:
+    def write_data(self) -> None:
         '''
         Schreibt die gelesenen Daten in die Datenbank.
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
@@ -62,7 +39,7 @@ class KassenjournalImporter():
         '''
 
         df = pd.read_csv(
-            self.kj_file, sep=';', decimal=',', encoding='utf8',
+            self.import_file, sep=';', decimal=',', encoding='utf8',
             usecols=['Kassen-Nr.', 'Bon-Nr.', 'Zeitpunkt', 'Beginn', 'Verkäufer', 'Kunden-Nr.', 'Bon-Summe', 'Typ', 'Artikelnummer',
                      'Bezeichnung', 'Warengruppe', 'MwSt.-Satz', 'Mengenfaktor', 'Menge', 'Preis', 'Gesamt', 'Infotext', 'Stornoreferenz', 'TSE-Info'],
             dtype={
@@ -116,7 +93,7 @@ class KassenjournalImporter():
         self.df = df
         self.__df_loaded = True
 
-    def update_table(self) -> None:
+    def post_process(self) -> None:
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabelle gestartet.'''
 
         sql = '''

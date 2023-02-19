@@ -1,13 +1,15 @@
 from tkinter import END
-from ttkbootstrap import Frame, LabelFrame, Button, Label, Entry
-from ttkbootstrap.scrolled import ScrolledText
-from controller.controller import Controller
-from model.errors import DatenImportError
 from tkinter.messagebox import showwarning
 
+from ttkbootstrap import Button, Entry, Frame, Label, LabelFrame
+from ttkbootstrap.scrolled import ScrolledText
 
-from model.job_ctrl_kassenjournal import KjImportJobController
+from controller.controller import Controller
+from controller.job_control import ImportJobController
+from model.errors import DatenImportError
+from model.kassenjournal_importer import KassenjournalImporter
 from model.log_level import LogLevel
+from typing import Type
 
 
 class ImportFrame(Frame):
@@ -62,13 +64,25 @@ class ImportFrame(Frame):
         self.fld_msg.text.insert(END, msg + '\n')
         self.fld_msg.text.configure(state='disabled')
 
+    def done(self) -> None:
+        '''Wird aufgerufen vom ImportJob, wenn die Verarbeitung abgeschlossen ist'''
+        self.btn_imp_kassenjournal.configure(state='normal')
+
     def import_kassenjournal(self) -> None:
         '''Importiert das Kassenjournal'''
 
+        self.btn_imp_kassenjournal.configure(state='disabled')
         try:
-            kj_job_ctrl = KjImportJobController(self.application)
-            kj_job_ctrl.importfile_ermitteln()
-            kj_job_ctrl.starte_import()
+            job_controller = ImportJobController(
+                self.application, self, KassenjournalImporter)
+
+            job_controller.importfile_ermitteln(
+                defaultextension='SCHAPFL-Kassenjournaldatei (*.csv)',
+                filetypes=[
+                    ('Kassenjournal-Datei', '*.csv')
+                ])
+
+            job_controller.starte_import()
 
         except DatenImportError as de:
             showwarning(
