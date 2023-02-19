@@ -24,7 +24,8 @@ def set_highdpi():
     try:
         from ctypes import windll
         windll.shcore.SetProcessDpiAwareness(1)
-    except:
+    except ImportError:
+        # only available on windows
         pass
 
 
