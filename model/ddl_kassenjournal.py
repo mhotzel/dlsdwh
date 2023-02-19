@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS kassenjournal_temp_t
     storno_ref TEXT,
     tse_info TEXT
 )
-""","""
+""", """
 CREATE TABLE IF NOT EXISTS kassenjournal_t
 (
     eintrag_ts DATETIME,
@@ -50,9 +50,15 @@ CREATE TABLE IF NOT EXISTS kassenjournal_t
     storno_ref TEXT,
     tse_info TEXT
 )
-""","""
+""", """
 CREATE INDEX IF NOT EXISTS idx_kjt_bon_nr ON kassenjournal_temp_t(bon_nr)
-""","""
+""", """
 CREATE INDEX IF NOT EXISTS idx_kj_bon_nr ON kassenjournal_t(bon_nr)
+""", """
+CREATE INDEX IF NOT EXISTS idx_kj_bon_abschl ON kassenjournal_t(bon_abschluss)
+""", """
+CREATE INDEX IF NOT EXISTS idx_kj_bon_beginn ON kassenjournal_t(bon_beginn)
+""","""
+CREATE INDEX IF NOT EXISTS idx_kj_eintragts ON kassenjournal_t(eintrag_ts)
 """
-]
+       ]
