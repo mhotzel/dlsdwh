@@ -47,6 +47,21 @@ class ImportFrame(Frame):
             self._frm_import, text='Status-Infos Kassenjournal ermitteln', bootstyle='secondary', command=self.schreibe_kj_status)
         self.btn_kj_infos.grid(row=1, column=2, sticky='WE', padx=10, pady=10)
 
+        self.btn_import_scsartikel = Button(self._frm_import, text='Schapfl-Artikelliste importieren', bootstyle='secondary')
+        self.btn_import_scsartikel.grid(row=2, column=0, sticky='WE', padx=10, pady=10)
+
+        self.letzter_imp_scs_artikel = StringVar(self._frm_import)
+        self.fld_letzter_imp_scs_artikel = Entry(
+            self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_scs_artikel)
+        self.fld_letzter_imp_scs_artikel.grid(
+            row=2, column=1, sticky='WE', padx=10, pady=10)
+
+        self.btn_kj_infos = Button(
+            self._frm_import, text='Status-Infos SCS-Artikel ermitteln', bootstyle='secondary')
+        self.btn_kj_infos.grid(row=2, column=2, sticky='WE', padx=10, pady=10)
+
+        #--------------------------
+
         self._frm_status = LabelFrame(self, text='Status-Infos')
         self._frm_status.pack(fill='both', expand=True)
         self._frm_status.columnconfigure(1, weight=1)
@@ -113,10 +128,13 @@ class ImportFrame(Frame):
         conn = self.application.db_manager.get_connection()
         monatsliste = KassenjournalStatus(conn).monate
         self.fld_msg.text.configure(state='normal')
+        
+        self.fld_msg.text.insert(END, f"{datetime.now().strftime('%d.%m.%Y %H:%M:%S')} - Kassenjournal - gespeicherte Monate:\n")
         if monatsliste:
-            self.fld_msg.text.insert(END, f"{datetime.now().strftime('%d.%m.%Y %H:%M:%S')} - Kassenjournal - gespeicherte Monate:\n")
             for monat in monatsliste:
                 self.fld_msg.text.insert(END, f'  {monat}\n')
+        else:
+            self.fld_msg.text.insert(END, f'  Keine Kassenjournaldaten vorhanden\n')
         self.fld_msg.text.insert(END, f'\n')
         self.fld_msg.text.configure(state='disabled')
         conn.close()
