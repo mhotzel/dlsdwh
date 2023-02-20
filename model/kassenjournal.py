@@ -87,10 +87,9 @@ class KassenjournalImporter():
         df['kdnr'] = df.kdnr.where(
             ~df.kdnr.isna(), 0).astype(int)
 
-        df['bon_beginn'] = pd.to_datetime(
-            df['bon_beginn'], format='%d.%m.%Y %H:%M:%S')
-        df['bon_abschluss'] = pd.to_datetime(
-            df['bon_abschluss'], format='%d.%m.%Y %H:%M:%S')
+        df['bon_beginn'] = pd.to_datetime(df['bon_beginn'], format='%d.%m.%Y %H:%M:%S').astype('datetime64[ns]')
+        df['bon_abschluss'] = pd.to_datetime(df['bon_abschluss'], format='%d.%m.%Y %H:%M:%S').astype('datetime64[ns]')
+        
         self.df = df
 
     def post_process(self) -> None:

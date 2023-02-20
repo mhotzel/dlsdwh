@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from tkinter import END, StringVar
 from tkinter.messagebox import showwarning
 
@@ -20,7 +21,6 @@ class ImportFrame(Frame):
 
         self.application = application
         self._build_ui()
-        self._register_bindings()
 
     def _build_ui(self) -> None:
         '''Baut die Oberflaeche'''
@@ -43,7 +43,11 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_kassenjournal.grid(
             row=1, column=1, sticky='WE', padx=10, pady=10)
 
-        self._frm_status = LabelFrame(self, text='Importstatus')
+        self.btn_kj_infos = Button(
+            self._frm_import, text='Status-Infos Kassenjournal ermitteln', bootstyle='secondary', command=self.schreibe_kj_status)
+        self.btn_kj_infos.grid(row=1, column=2, sticky='WE', padx=10, pady=10)
+
+        self._frm_status = LabelFrame(self, text='Status-Infos')
         self._frm_status.pack(fill='both', expand=True)
         self._frm_status.columnconfigure(1, weight=1)
 
@@ -51,9 +55,6 @@ class ImportFrame(Frame):
             self._frm_status, height=10, width=120, state='disabled')
         self.fld_msg.grid(row=1, column=0, columnspan=2,
                           sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
-
-    def _register_bindings(self) -> None:
-        '''registriert die Events'''
 
     def show(self) -> None:
         '''Bringt den Frame in den Vordergrund'''
@@ -100,7 +101,22 @@ class ImportFrame(Frame):
         conn = self.application.db_manager.get_connection()
         letzte_aenderung = KassenjournalStatus(conn).letzte_aenderung
         if letzte_aenderung:
-            self.letzter_imp_kassenjournal.set(letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+            self.letzter_imp_kassenjournal.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_kassenjournal.set('Kein Import vorhanden')
+        conn.close()
+
+    def schreibe_kj_status(self) -> None:
+        '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''
+
+        conn = self.application.db_manager.get_connection()
+        monatsliste = KassenjournalStatus(conn).monate
+        self.fld_msg.text.configure(state='normal')
+        if monatsliste:
+            self.fld_msg.text.insert(END, f"{datetime.now().strftime('%d.%m.%Y %H:%M:%S')} - Kassenjournal - gespeicherte Monate:\n")
+            for monat in monatsliste:
+                self.fld_msg.text.insert(END, f'  {monat}\n')
+        self.fld_msg.text.insert(END, f'\n')
+        self.fld_msg.text.configure(state='disabled')
         conn.close()
