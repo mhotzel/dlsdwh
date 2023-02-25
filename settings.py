@@ -69,6 +69,6 @@ def create_tables() -> None:
 
     with dbconn:
         cur = dbconn.cursor()
-        for sql in ddl_kassenjournal.SQL:
+        for sql in ddl_kassenjournal.SQL_DDL:
             cur.execute(sql)
         cur.close()

@@ -1,6 +1,6 @@
 '''Definiert die SQL-Statements zur Erzeugung der Kassenjournal-Tabellen'''
 
-SQL = ["""
+SQL_DDL = ["""
 CREATE TABLE IF NOT EXISTS kassenjournal_temp_t
 (
     eintrag_ts DATETIME,
