@@ -90,7 +90,7 @@ class ImportJobController():
 
         queue = Queue()
         worker = Thread(target=self._run_import, args=(
-            self.importer_clzz, self.db_manager, self.filenames, queue))
+            self.importer_clzz, self.db_manager, self.filenames, queue, self.application))
 
         worker.start()
         self.application.after(1, lambda: self.monitor(worker, queue))
@@ -104,18 +104,26 @@ class ImportJobController():
 
             self.application.after(50, lambda: self.monitor(worker, queue))
         else:
-            self.application.log_message(
-                LogLevel.INFO, 'Import abgeschlossen')
+            if self.e:
+                self.application.log_message(
+                LogLevel.ERROR, f'Import mit Fehler beendet: {self.e}')
+            else:
+                self.application.log_message(
+                    LogLevel.INFO, f'Import abgeschlossen')
             self.job_owner.done()
 
-    def _run_import(self, importer_clzz: Type[Importer], db_man: DbManager, files: List[str], queue: Queue) -> None:
+    def _run_import(self, importer_clzz: Type[Importer], db_man: DbManager, files: List[str], queue: Queue, app: Controller) -> None:
         '''Soll in einem Thread ausgeführt werden, verarbeitet die Dateien'''
 
-        for file in files:
-            imp = importer_clzz(db_man, file)
-            imp.load_file()
-            queue.put(f"Datei '{file}' geladen")
-            imp.write_data()
-            queue.put(f"Datei '{file}' geschrieben")
-            imp.post_process()
-            queue.put(f"Datei '{file}' Nachverarbeitung abgeschlossen")
+        self.e = None
+        try:
+            for file in files:
+                imp = importer_clzz(db_man, file)
+                imp.load_file()
+                queue.put(f"Datei '{file}' geladen. Schreiben gestartet...")
+                imp.write_data()
+                queue.put(f"Datei '{file}' geschrieben. Nachverarbeitung gestartet...")
+                imp.post_process()
+                queue.put(f"Datei '{file}' Nachverarbeitung abgeschlossen")
+        except Exception as e:
+            self.e = e

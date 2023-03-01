@@ -3,6 +3,7 @@ from hashlib import md5
 from typing import List
 
 import pandas as pd
+import numpy as np
 from sqlalchemy import Engine, Table, join, select, text, Connection
 
 from model.db_manager import DbManager
@@ -33,11 +34,14 @@ class KassenjournalImporter():
         self.tab_kjt: Table = self.db_manager.tables['tab_kassenjournal_temp']
         self.tab_bons: Table = self.db_manager.tables['tab_kassenbons']
         self.tab_bons_temp: Table = self.db_manager.tables['tab_kassenbons_temp']
+        self.tab_bon_pos: Table = self.db_manager.tables['tab_bon_pos']
+        self.tab_bon_pos_temp: Table = self.db_manager.tables['tab_bon_pos_temp']
 
         conn = self.db_manager.get_engine().connect()
         with conn:
             conn.execute(self.tab_kjt.delete())
             conn.execute(self.tab_bons_temp.delete())
+            conn.execute(self.tab_bon_pos_temp.delete())
 
             self.df.to_sql(self.tab_kjt.name, conn,
                            if_exists='append', index=False)
@@ -117,9 +121,11 @@ class KassenjournalImporter():
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabellen gestartet.'''
         conn = self.db_manager.get_engine().connect()
         with conn:
-            self._fuelle_kassenjournal(conn)
+            #self._fuelle_kassenjournal(conn)
             self._belade_bons_temp(conn)
             self._belade_bons(conn)
+            self._belade_bon_pos_temp(conn)
+            self._belade_bon_pos(conn)
             conn.commit()
         conn.close()
 
@@ -172,7 +178,9 @@ class KassenjournalImporter():
             kjt.bon_beginn,
             kjt.bon_abschluss,
             kjt.bon_summe,
-            kjt.kdnr
+            kjt.kdnr,
+            kjt.tse_info,
+            kjt.storno_ref
 
         FROM (
             SELECT 
@@ -200,7 +208,9 @@ class KassenjournalImporter():
                 kjt.bon_beginn,
                 kjt.bon_abschluss,
                 kjt.bon_summe,
-                kjt.kdnr
+                kjt.kdnr,
+                kjt.tse_info,
+                kjt.storno_ref
             FROM
                 kassenjournal_temp_t AS kjt
         ) as kjt
@@ -218,11 +228,13 @@ class KassenjournalImporter():
             df_bon_zwischen.bon_abschluss)
         df_bon_zwischen['bon_datum'] = pd.to_datetime(
             df_bon_zwischen.bon_abschluss).dt.date
+        
+        conn.execute(self.tab_bons_temp.delete())
         df_bon_zwischen.to_sql(self.tab_bons_temp.name,
                                conn, index=False, if_exists='append')
 
     def _belade_bons(self, conn: Connection) -> None:
-        '''Aus der Kassenbons-Zwischentabelle wird die Bons-Zieltabelle befuellt'''
+        '''Aus der Kassenbons-Zwischentabelle wird die Kassenbons-Zieltabelle befuellt'''
         sql = '''
         INSERT INTO kassenbons_t
         SELECT
@@ -237,6 +249,58 @@ class KassenjournalImporter():
         '''
         conn.execute(text(sql))
 
+    def _belade_bon_pos_temp(self, conn: Connection) -> None:
+        '''Aus der Kassenjournal-Zwischentabelle wird die Kassenpositionen-Zwischentabelle befuellt'''
+
+        sql = 'SELECT kjt.* FROM kassenjournal_temp_t AS kjt ORDER BY kjt.kasse_nr, kjt.bon_nr, kjt.pos'
+        df = pd.read_sql_query(text(sql), con=conn)
+        df['wgr'] = df['warengruppe'].str.split('|', expand=True)[0].str.strip()
+        df['wgr_bez'] = df['warengruppe'].str.split('|', expand=True)[1].str.strip()
+        df['ma_id'] = df['ma'].str.split('|', expand=True)[0]
+
+        df['wgr'] = df['wgr'].where(~(df['warengruppe'].str.contains('fehlt', case=False) & df['art_bez'].str.contains('einzahlung', case=False) & df['preis_gesamt'] != 0), "9001:1")
+        df['wgr'] = df['wgr'].where(~(df['warengruppe'].str.contains('fehlt', case=False) & df['art_bez'].str.contains('auszahlung', case=False) & df['preis_gesamt'] != 0), "9001:2")
+        df['wgr'] = df['wgr'].where(~(df['wgr'].astype(str).str.contains('fehlt', case=False)), "0:0")
+
+        df['hash_bon'] = (df['kasse_nr'].astype(str) + ":" + df['bon_nr'].astype(str)).apply(lambda data: md5(data.encode('utf-8')).hexdigest())
+
+        df = df.drop(
+            columns=[
+                'bon_beginn', 'bon_abschluss', 'ma', 'bon_summe',
+                'typ', 'kdnr', 'bon_typ', 'warengruppe', 'storno_ref',
+                'tse_info', 'infotext'].copy()
+        )
+        
+        df['hash_fuehrend'] = None
+        old_pos = None
+        for i in range(len(df)):
+            if not old_pos:
+                old_pos = df.loc[i, "hash"]
+            
+            if not df.loc[i, "art_nr"] == '-':
+                df.loc[i, 'hash_fuehrend'] = df.loc[i, "hash"]
+                old_pos = df.loc[i, "hash"]
+            else:
+                df.loc[i, 'hash_fuehrend'] = old_pos
+        conn.execute(self.tab_bon_pos_temp.delete())
+        df.to_sql(self.tab_bon_pos_temp.name, conn, index=False, if_exists='append')
+
+    def _belade_bon_pos(self, conn: Connection) -> None:
+        '''Aus der Bonpositionen-Zwischentabelle wird die Bonpositionen-Zieltabelle befuellt'''
+
+        sql = '''
+        INSERT INTO kassenbons_pos_t
+        SELECT
+            bt.*
+            
+        FROM kassenbons_pos_temp_t AS bt
+
+        LEFT JOIN kassenbons_pos_t AS b
+            ON	bt.hash = b.hash
+
+        WHERE b.hash IS NULL
+        '''
+        conn.execute(text(sql))
 
 class KassenjournalStatus():
     '''Holt Informationen zu den gespeicherten Kassenjournaldaten'''
@@ -251,9 +315,9 @@ class KassenjournalStatus():
 
         SQL = """
         SELECT DISTINCT
-            strftime('%Y-%m', kj.bon_abschluss) as monat
+            strftime('%Y-%m', bons.bon_datum) as monat
             
-        FROM kassenjournal_t AS kj
+        FROM kassenbons_t AS bons
 
         ORDER BY 1
         """
@@ -273,9 +337,9 @@ class KassenjournalStatus():
         '''
         SQL = """
         SELECT
-            MAX(datetime(kj.eintrag_ts)) as zeitpunkt
+            MAX(datetime(bons.eintrag_ts)) as zeitpunkt
             
-        FROM kassenjournal_t AS kj
+        FROM kassenbons_t AS bons
         """
         conn = self.db_manager.get_engine().connect()
         with conn:

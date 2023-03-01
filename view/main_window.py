@@ -2,6 +2,7 @@ from configparser import ConfigParser
 from datetime import datetime
 from pathlib import Path
 from tkinter import StringVar
+from tkinter.messagebox import showerror
 from typing import Mapping
 
 from ttkbootstrap import Label, Separator, Window
@@ -82,6 +83,9 @@ class MainWindow(Window):
         msg = f"{ts} - {level.name} - {message}"
         self._set_status_message(msg)
         self.log_file.write(msg + '\n')
+
+        if level > LogLevel.INFO:
+            showerror(title='Fehler beim Import', message=message)
 
     def zeige_import_frame(self) -> None:
         '''Zeigt den Import-Frame an.'''

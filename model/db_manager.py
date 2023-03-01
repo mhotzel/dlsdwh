@@ -1,5 +1,8 @@
 from pathlib import Path
-from sqlalchemy import TIMESTAMP, BigInteger, Column, DateTime, Engine, Integer, MetaData, Numeric, String, Table, create_engine, URL, Date
+
+from sqlalchemy import (TIMESTAMP, URL, BigInteger, Boolean, Column, Date,
+                        DateTime, Engine, Integer, MetaData, Numeric, String,
+                        Table, create_engine)
 
 
 class DbManager():
@@ -20,7 +23,8 @@ class DbManager():
             database=self.dbfile
         )
 
-        return create_engine(url)
+        engine = create_engine(url, echo=False)
+        return engine
 
     def get_metadata(self) -> MetaData:
         'liefert die Metadaten zur Datenbank. Lazy-Init.'
@@ -91,7 +95,9 @@ class DbManager():
                 Column('bon_abschluss', DateTime()),
                 Column('bon_datum', Date(), index=True),
                 Column('kdnr', Integer(), index=True),
-                Column('bon_summe', Numeric(18, 2))
+                Column('bon_summe', Numeric(18, 2)),
+                Column('tse_info', String(255)),
+                Column('storno_ref', Integer())
             )
             self.tables['tab_kassenbons_temp'] = Table(
                 'kassenbons_temp_t', self.meta_data,
@@ -104,6 +110,75 @@ class DbManager():
                 Column('bon_abschluss', DateTime()),
                 Column('bon_datum', Date(), index=True),
                 Column('kdnr', Integer(), index=True),
-                Column('bon_summe', Numeric(18, 2))
+                Column('bon_summe', Numeric(18, 2)),
+                Column('tse_info', String(255)),
+                Column('storno_ref', Integer())
+            )
+            self.tables['tab_bon_pos_temp'] = Table(
+                'kassenbons_pos_temp_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('hash_bon', String(40)),
+                Column('hash_fuehrend', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('kasse_nr', Integer()),
+                Column('bon_nr', BigInteger()),
+                Column('pos', Integer()),
+                Column('pos_typ', String(12)),
+                Column('art_nr', String(40)),
+                Column('art_bez', String(255)),
+                Column('mwst_satz', Numeric(5, 2)),
+                Column('mengenfaktor', Integer()),
+                Column('menge', Numeric(18, 3)),
+                Column('preis_einzel', Numeric(18, 2)),
+                Column('preis_gesamt', Numeric(18, 2)),
+                Column('wgr', Integer()),
+                Column('wgr_bez', String(50)),
+                Column('ma_id', Integer())
+            )
+            self.tables['tab_bon_pos'] = Table(
+                'kassenbons_pos_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('hash_bon', String(40), index=True),
+                Column('hash_fuehrend', String(40), index=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('kasse_nr', Integer()),
+                Column('bon_nr', BigInteger(), index=True),
+                Column('pos', Integer()),
+                Column('pos_typ', String(12), index=True),
+                Column('art_nr', String(40), index=True),
+                Column('art_bez', String(255)),
+                Column('mwst_satz', Numeric(5, 2)),
+                Column('mengenfaktor', Integer()),
+                Column('menge', Numeric(18, 3)),
+                Column('preis_einzel', Numeric(18, 2)),
+                Column('preis_gesamt', Numeric(18, 2)),
+                Column('wgr', String(40), index=True),
+                Column('wgr_bez', String(50)),
+                Column('ma_id', Integer())
+            )
+            self.tables['tab_warengruppen'] = Table(
+                'warengruppen_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('wgr', String(40)),
+                Column('wgr_bez', String(255)),
+                Column('mwst_kz', String(2)),
+                Column('mwst_satz', Numeric(5, 2)),
+                Column('rabatt', String(1)),
+                Column('fsk_kz', String(12)),
+                Column('gueltig_von', TIMESTAMP()),
+                Column('gueltig_bis', TIMESTAMP()),
+                Column('gueltig', Boolean(create_constraint=True))
+            )
+            self.tables['tab_warengruppen_temp'] = Table(
+                'warengruppen_temp_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('wgr', String(40)),
+                Column('wgr_bez', String(255)),
+                Column('mwst_kz', String(2)),
+                Column('mwst_satz', Numeric(5, 2)),
+                Column('rabatt', String(1)),
+                Column('fsk_kz', String(12))
             )
         return self.meta_data
