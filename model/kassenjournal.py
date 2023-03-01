@@ -95,6 +95,7 @@ class KassenjournalImporter():
         df['mengenfaktor'] = df.mengenfaktor.where(
             ~df.mengenfaktor.isna(), 1).astype(int)
         df['eintrag_ts'] = datetime.now().isoformat()
+        df['eintrag_ts'] = pd.to_datetime(df['eintrag_ts'])
         df['pos'] = df[['bon_nr']].groupby('bon_nr').cumcount()
         df['bon_beginn'] = df['bon_beginn'].where(
             ~df['bon_beginn'].isna(), df['bon_abschluss'])
@@ -118,6 +119,7 @@ class KassenjournalImporter():
         with conn:
             self._fuelle_kassenjournal(conn)
             self._belade_bons_temp(conn)
+            self._belade_bons(conn)
             conn.commit()
         conn.close()
 
@@ -138,7 +140,6 @@ class KassenjournalImporter():
         WHERE kj.bon_nr IS NULL
         '''
         conn.execute(text(sql))
-        conn.commit()
 
     def _belade_bons_temp(self, conn: Connection) -> None:
         '''Aus der Kassenjournal-Zwischentabelle wird die Kassenbons-Zwischentabelle befuellt'''
@@ -207,9 +208,35 @@ class KassenjournalImporter():
             AND btmax.bon_nr = kjt.bon_nr
         '''
         df_bon_zwischen = pd.read_sql_query(text(sql), conn)
-        #df_bon_zwischen['bon_datum'] = pd.to_datetime(df_bon_zwischen['bon_abschluss'], '%Y-%m-%d')
-        df_bon_zwischen['hash'] =(df_bon_zwischen['kasse_nr'].astype(str) + ":" + df_bon_zwischen['bon_nr'].astype(str)).apply(lambda data: md5(data.encode('utf-8')).hexdigest())
-        df_bon_zwischen.to_sql(self.tab_bons_temp.name, conn, index=False, if_exists='append')
+        df_bon_zwischen['hash'] = (df_bon_zwischen['kasse_nr'].astype(
+            str) + ":" + df_bon_zwischen['bon_nr'].astype(str)).apply(lambda data: md5(data.encode('utf-8')).hexdigest())
+        df_bon_zwischen['eintrag_ts'] = pd.to_datetime(
+            df_bon_zwischen.eintrag_ts)
+        df_bon_zwischen['bon_beginn'] = pd.to_datetime(
+            df_bon_zwischen.bon_beginn)
+        df_bon_zwischen['bon_abschluss'] = pd.to_datetime(
+            df_bon_zwischen.bon_abschluss)
+        df_bon_zwischen['bon_datum'] = pd.to_datetime(
+            df_bon_zwischen.bon_abschluss).dt.date
+        df_bon_zwischen.to_sql(self.tab_bons_temp.name,
+                               conn, index=False, if_exists='append')
+
+    def _belade_bons(self, conn: Connection) -> None:
+        '''Aus der Kassenbons-Zwischentabelle wird die Bons-Zieltabelle befuellt'''
+        sql = '''
+        INSERT INTO kassenbons_t
+        SELECT
+            bt.*
+            
+        FROM kassenbons_temp_t AS bt
+
+        LEFT JOIN kassenbons_t AS b
+            ON	bt.hash = b.hash
+
+        WHERE b.hash IS NULL
+        '''
+        conn.execute(text(sql))
+
 
 class KassenjournalStatus():
     '''Holt Informationen zu den gespeicherten Kassenjournaldaten'''
