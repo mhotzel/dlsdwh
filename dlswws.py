@@ -1,16 +1,8 @@
-from configparser import ConfigParser
 from tkinter.messagebox import showerror
 
-from settings import (CONFIG_FILE, check_configfile, create_tables,
-                      get_dbconfig, set_highdpi, set_lang)
+from settings import (check_configfile, create_tables,
+                      get_dbconfig, set_highdpi, set_lang, get_config)
 from view.main_window import MainWindow
-
-
-def get_config() -> ConfigParser:
-    '''liest die Konfiguration und gibt diese zurück'''
-    cfg_parser = ConfigParser()
-    cfg_parser.read(CONFIG_FILE)
-    return cfg_parser
 
 
 def main() -> None:

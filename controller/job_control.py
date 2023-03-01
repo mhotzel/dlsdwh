@@ -61,10 +61,11 @@ class JobOwner(Protocol):
 class ImportJobController():
     '''Job Controller für den Import von Dateien'''
 
-    def __init__(self, application: Controller, job_owner: JobOwner, importer_clzz) -> None:
+    def __init__(self, application: Controller, job_owner: JobOwner, importer_clzz, db_manager: DbManager) -> None:
         super().__init__()
 
         self.application = application
+        self.db_manager = db_manager
         self.filenames = None
         self.job_owner = job_owner
         self.importer_clzz = importer_clzz
@@ -89,7 +90,7 @@ class ImportJobController():
 
         queue = Queue()
         worker = Thread(target=self._run_import, args=(
-            self.importer_clzz, self.application.db_manager, self.filenames, queue))
+            self.importer_clzz, self.db_manager, self.filenames, queue))
 
         worker.start()
         self.application.after(1, lambda: self.monitor(worker, queue))
@@ -110,13 +111,11 @@ class ImportJobController():
     def _run_import(self, importer_clzz: Type[Importer], db_man: DbManager, files: List[str], queue: Queue) -> None:
         '''Soll in einem Thread ausgeführt werden, verarbeitet die Dateien'''
 
-        conn = db_man.get_connection()
         for file in files:
-            imp = importer_clzz(conn, file)
+            imp = importer_clzz(db_man, file)
             imp.load_file()
             queue.put(f"Datei '{file}' geladen")
             imp.write_data()
             queue.put(f"Datei '{file}' geschrieben")
             imp.post_process()
             queue.put(f"Datei '{file}' Nachverarbeitung abgeschlossen")
-        conn.close()

@@ -2,6 +2,7 @@ from configparser import ConfigParser
 from datetime import datetime
 from pathlib import Path
 from tkinter import StringVar
+from typing import Mapping
 
 from ttkbootstrap import Label, Separator, Window
 
@@ -16,7 +17,7 @@ from view.start_frm import StartFrame
 
 class MainWindow(Window):
 
-    def __init__(self, cfg: ConfigParser):
+    def __init__(self, cfg: Mapping[str, str]):
         super().__init__(
             title='DLS Warenwirtschaft',
             themename='litera',
@@ -24,9 +25,7 @@ class MainWindow(Window):
             iconphoto=Path(IMGDIR) / 'logo.png'
         )
 
-        self.cfg_parser = cfg
-        dbfile = cfg['datenbank']['dbfile']
-        self.db_manager = DbManager(dbfile)
+        self.db_manager = DbManager(cfg['dbfile'])
         self.log_file = open(LOG_FILE, mode='at')
 
         self._build_ui()
@@ -53,7 +52,7 @@ class MainWindow(Window):
 
         self._frames = {
             StartFrame: StartFrame(self),
-            ImportFrame: ImportFrame(self, application=self),
+            ImportFrame: ImportFrame(self, application=self, db_man=self.db_manager),
             AuswertungenFrame: AuswertungenFrame(self, application=self)
         }
 

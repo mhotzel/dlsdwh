@@ -7,19 +7,20 @@ from ttkbootstrap.scrolled import ScrolledText
 
 from controller.controller import Controller
 from controller.job_control import ImportJobController
+from model.db_manager import DbManager
 from model.errors import DatenImportError
 from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
 from model.log_level import LogLevel
-from typing import Type
 
 
 class ImportFrame(Frame):
     '''Implementiert einen Frame, der die Funktionen zum Import von Daten anbietet'''
 
-    def __init__(self, master, application: Controller) -> None:
+    def __init__(self, master, application: Controller, db_man: DbManager) -> None:
         super().__init__(master)
 
         self.application = application
+        self.db_manager = db_man
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -93,7 +94,7 @@ class ImportFrame(Frame):
         self.btn_imp_kassenjournal.configure(state='disabled')
         try:
             job_controller = ImportJobController(
-                self.application, self, KassenjournalImporter)
+                self.application, self, KassenjournalImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
                 defaultextension='SCHAPFL-Kassenjournaldatei (*.csv)',
@@ -113,20 +114,17 @@ class ImportFrame(Frame):
     def update_letzter_import(self) -> None:
         '''ermittelt und setzt das Datum den letzten Imports'''
 
-        conn = self.application.db_manager.get_connection()
-        letzte_aenderung = KassenjournalStatus(conn).letzte_aenderung
+        letzte_aenderung = KassenjournalStatus(self.application.db_manager).letzte_aenderung
         if letzte_aenderung:
             self.letzter_imp_kassenjournal.set(
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_kassenjournal.set('Kein Import vorhanden')
-        conn.close()
 
     def schreibe_kj_status(self) -> None:
         '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''
 
-        conn = self.application.db_manager.get_connection()
-        monatsliste = KassenjournalStatus(conn).monate
+        monatsliste = KassenjournalStatus(self.application.db_manager).monate
         self.fld_msg.text.configure(state='normal')
         
         self.fld_msg.text.insert(END, f"{datetime.now().strftime('%d.%m.%Y %H:%M:%S')} - Kassenjournal - gespeicherte Monate:\n")
@@ -137,4 +135,3 @@ class ImportFrame(Frame):
             self.fld_msg.text.insert(END, f'  Keine Kassenjournaldaten vorhanden\n')
         self.fld_msg.text.insert(END, f'\n')
         self.fld_msg.text.configure(state='disabled')
-        conn.close()

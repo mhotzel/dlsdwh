@@ -2,14 +2,28 @@ from configparser import ConfigParser
 import locale
 import os
 from pathlib import Path
-import sqlite3
 from tkinter.filedialog import asksaveasfilename
-from model import ddl_kassenjournal
+from typing import Mapping
+from model.db_manager import DbManager
 
 BASEDIR = str(Path(__file__).parent)
 IMGDIR = str(Path(BASEDIR) / 'res' / 'img')
 CONFIG_FILE = str(Path('~/.dlswws.ini').expanduser().absolute())
 LOG_FILE = str(Path('~/dlswws.log').expanduser().absolute())
+
+
+def get_config() -> Mapping[str, str]:
+    '''liest die Konfiguration und gibt diese zurück'''
+    cfg_parser = ConfigParser()
+    cfg_parser.read(CONFIG_FILE)
+
+    cfg = dict()
+    for section in cfg_parser.sections():
+        for key, val in cfg_parser[section].items():
+            cfg[key] = val
+
+    return cfg
+
 
 def set_lang():
     '''Setzt die Sprache'''
@@ -61,14 +75,11 @@ def get_dbconfig() -> str:
 
     with open(CONFIG_FILE, mode='w') as cfgfile:
         cfg_parser.write(cfgfile)
-    
+
     return filename
 
-def create_tables() -> None:
-    dbconn = sqlite3.connect(get_dbconfig())
 
-    with dbconn:
-        cur = dbconn.cursor()
-        for sql in ddl_kassenjournal.SQL_DDL:
-            cur.execute(sql)
-        cur.close()
+def create_tables() -> None:
+    db_man = DbManager(get_dbconfig())
+    md = db_man.get_metadata()
+    md.create_all(db_man.get_engine())
