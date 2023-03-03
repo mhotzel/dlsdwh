@@ -1,8 +1,8 @@
-import pandas as pd
-import numpy as np
-from sqlalchemy import Connection, Table, text
 from datetime import datetime
 from hashlib import md5
+
+import pandas as pd
+from sqlalchemy import Connection, Table, text
 
 from model.db_manager import DbManager
 
@@ -50,7 +50,7 @@ class WarengruppenImporter():
             'UWGR-NR': 'uwgr',
             'Bezeichnung': 'wgr_bez',
             'MwSt.-KZ': 'mwst_kz',
-            'Rabatt': 'rabatt',
+            'Rabatt': 'rabatt_kz',
             'FSKKZ': 'fsk_kz'}
         )
 
@@ -69,7 +69,7 @@ class WarengruppenImporter():
 
         df_wgr['mwst_satz'] = df_wgr['mwst_kz'].apply(mwst)
         df_wgr['hash_diff'] = (df_wgr['wgr_bez'] + ':' + df_wgr['mwst_kz'].astype(str) + ":" + df_wgr['mwst_satz'].astype(
-            str) + ':' + df_wgr['rabatt'] + ':' + df_wgr['fsk_kz'].astype(str)).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
+            str) + ':' + df_wgr['rabatt_kz'] + ':' + df_wgr['fsk_kz'].astype(str)).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
         df_wgr['hash'] = df_wgr['wgr'].apply(
             lambda s: md5(s.encode('utf-8')).hexdigest())
         df_wgr['quelle'] = 'scs_export'
@@ -144,7 +144,7 @@ class WarengruppenImporter():
         Daten vorhanden sind.
         '''
         sql = '''
-        INSERT INTO sat_warengruppen_t
+        INSERT INTO sat_warengruppen_t (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, wgr_bez, mwst_kz, mwst_satz, rabatt_kz, fsk_kz)
         SELECT 
             wt.hash,
             wt.hash_diff,
@@ -154,7 +154,7 @@ class WarengruppenImporter():
             wt.wgr_bez,
             wt.mwst_kz,
             wt.mwst_satz,
-            wt.rabatt,
+            wt.rabatt_kz,
             wt.fsk_kz
             
         FROM temp_warengruppen_t as wt
@@ -184,6 +184,7 @@ class WarengruppenImporter():
         WHERE bas.hash = hub_warengruppen_t.hash
         '''
         conn.execute(text(sql))
+
 
 class WarengruppenStatus():
     '''Holt Informationen zu den gespeicherten Warengruppendaten'''

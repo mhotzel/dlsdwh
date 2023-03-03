@@ -10,6 +10,7 @@ from controller.job_control import ImportJobController
 from model.db_manager import DbManager
 from model.errors import DatenImportError
 from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
+from model.kunden import KundenImporter, KundenStatus
 from model.log_level import LogLevel
 from model.warengruppen import WarengruppenImporter, WarengruppenStatus
 
@@ -59,21 +60,29 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_warengruppen = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_warengruppen)
         self.fld_letzter_imp_warengruppen.grid(row=2, column=1, sticky='WE', padx=10, pady=10)
 
+        self.btn_import_kundendaten = Button(self._frm_import, text='Kundendaten importieren', bootstyle='secondary', command=self.import_kundendaten)
+        self.btn_import_kundendaten.grid(row=3, column=0, sticky='WE', padx=10, pady=10)
+        self.controls.add(self.btn_import_kundendaten)
+
+        self.letzter_imp_kundendaten = StringVar(self._frm_import)
+        self.fld_letzter_imp_kundendaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_kundendaten)
+        self.fld_letzter_imp_kundendaten.grid(row=3, column=1, sticky='WE', padx=10, pady=10)
+
         self.btn_import_scsartikel = Button(
             self._frm_import, text='Schapfl-Artikelliste importieren', bootstyle='secondary')
         self.btn_import_scsartikel.grid(
-            row=3, column=0, sticky='WE', padx=10, pady=10)
+            row=20, column=0, sticky='WE', padx=10, pady=10)
         self.controls.add(self.btn_import_scsartikel)
 
         self.letzter_imp_scs_artikel = StringVar(self._frm_import)
         self.fld_letzter_imp_scs_artikel = Entry(
             self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_scs_artikel)
         self.fld_letzter_imp_scs_artikel.grid(
-            row=3, column=1, sticky='WE', padx=10, pady=10)
+            row=20, column=1, sticky='WE', padx=10, pady=10)
 
         self.btn_kj_infos = Button(
             self._frm_import, text='Status-Infos SCS-Artikel ermitteln', bootstyle='secondary')
-        self.btn_kj_infos.grid(row=3, column=2, sticky='WE', padx=10, pady=10)
+        self.btn_kj_infos.grid(row=20, column=2, sticky='WE', padx=10, pady=10)
 
         # --------------------------
 
@@ -91,6 +100,7 @@ class ImportFrame(Frame):
         self.tkraise()
         self.update_letzter_import_kj()
         self.update_letzter_import_wgr()
+        self.update_letzter_import_kdn()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -102,6 +112,7 @@ class ImportFrame(Frame):
         '''Wird aufgerufen vom ImportJob, wenn die Verarbeitung abgeschlossen ist'''
         self.update_letzter_import_kj()
         self.update_letzter_import_wgr()
+        self.update_letzter_import_kdn()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -127,7 +138,7 @@ class ImportFrame(Frame):
 
         except DatenImportError as de:
             showwarning(
-                title='Fehler beim Import',
+                title='Fehler beim Import der Kassenjournale',
                 message=de.args[0]
             )
             self.application.log_message(LogLevel.WARN, de.args[0])
@@ -154,14 +165,40 @@ class ImportFrame(Frame):
 
         except DatenImportError as de:
             showwarning(
-                title='Fehler beim Import',
+                title='Fehler beim Import der Warengruppendaten',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
+            self.done()
+
+    def import_kundendaten(self) -> None:
+        '''Importiert die Kundendaten'''
+
+        for ctrl in self.controls:
+            ctrl.configure(state='disabled')
+
+        try:
+            job_controller = ImportJobController(
+                self.application, self, KundenImporter, db_manager=self.db_manager)
+
+            job_controller.importfile_ermitteln(
+                defaultextension='SCHAPFL-Kundendatei (*.txt)',
+                filetypes=[
+                    ('Kundendatei-Datei', '*.txt')
+                ])
+
+            job_controller.starte_import()
+
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import der Kundendaten',
                 message=de.args[0]
             )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
     def update_letzter_import_kj(self) -> None:
-        '''ermittelt und setzt das Datum den letzten Imports'''
+        '''ermittelt und setzt das Datum den letzten Imports des Kassenjournals'''
 
         letzte_aenderung = KassenjournalStatus(
             self.application.db_manager).letzte_aenderung
@@ -172,7 +209,7 @@ class ImportFrame(Frame):
             self.letzter_imp_kassenjournal.set('Kein Import vorhanden')
 
     def update_letzter_import_wgr(self) -> None:
-        '''ermittelt und setzt das Datum den letzten Imports'''
+        '''ermittelt und setzt das Datum den letzten Imports der Warengruppen'''
 
         letzte_aenderung = WarengruppenStatus(
             self.application.db_manager).letzte_aenderung
@@ -180,7 +217,18 @@ class ImportFrame(Frame):
             self.letzter_imp_warengruppen.set(
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
-            self.letzter_imp_kassenjournal.set('Kein Import vorhanden')
+            self.letzter_imp_warengruppen.set('Kein Import vorhanden')
+
+    def update_letzter_import_kdn(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports der Kundendaten'''
+
+        letzte_aenderung = KundenStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_kundendaten.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_kundendaten.set('Kein Import vorhanden')
 
     def schreibe_kj_status(self) -> None:
         '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''

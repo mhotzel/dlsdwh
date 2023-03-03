@@ -187,7 +187,7 @@ class DbManager():
                 Column('wgr_bez', String(255)),
                 Column('mwst_kz', String(2)),
                 Column('mwst_satz', Numeric(5, 2)),
-                Column('rabatt', String(1)),
+                Column('rabatt_kz', String(1)),
                 Column('fsk_kz', String(12))
             )
             self.tables['tab_kunden_temp'] = Table(
@@ -218,5 +218,28 @@ class DbManager():
                 Column('kd_name', String(255)),
                 Column('rabatt_satz', Numeric(5, 2))
             )
-
+            self.tables['tab_artikel_temp'] = Table(
+                'temp_artikel_t', self.meta_data,
+                Column('quelle', String(255)),
+                Column('hash', String(40), primary_key=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('art_nr', String(40)),
+                Column('idx', Integer()),
+                Column('scs_pool_id', BigInteger()),
+                Column('art_bez', String(255)),
+                Column('mengenfaktor', Numeric(18, 3)),
+                Column('vk_brutto', Numeric(18, 2)),
+                Column('preiseinheit', Integer()),
+                Column('kurzcode', String(40)),
+                Column('bontext', String(255)),
+                Column('mengeneinheit', String(50)),
+                Column('mengentyp', String(50)),
+                Column('gpfaktor', Numeric(6, 3)),
+                Column('wgr', String(40)),
+                Column('rabatt_kz', String(1)),
+                Column('preisgebunden_kz', String(1)),
+                Column('fsk_kz', String(1)),
+                Column('notizen', String(255))
+            )
         return self.meta_data
