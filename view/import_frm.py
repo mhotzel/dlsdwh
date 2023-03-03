@@ -13,6 +13,7 @@ from model.errors import DatenImportError
 from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
 from model.kunden import KundenImporter, KundenStatus
 from model.log_level import LogLevel
+from model.pfand import PfandImporter, PfandStatus
 from model.warengruppen import WarengruppenImporter, WarengruppenStatus
 
 
@@ -80,6 +81,14 @@ class ImportFrame(Frame):
             self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_scs_artikel)
         self.fld_letzter_imp_scs_artikel.grid(
             row=20, column=1, sticky='WE', padx=10, pady=10)
+        
+        self.btn_import_pfanddaten = Button(self._frm_import, text='Pfanddaten importieren', bootstyle='secondary', command=self.import_pfanddaten)
+        self.btn_import_pfanddaten.grid(row=21, column=0, sticky='WE', padx=10, pady=10)
+        self.controls.add(self.btn_import_pfanddaten)
+
+        self.letzter_imp_pfanddaten = StringVar(self._frm_import)
+        self.fld_letzter_imp_pfanddaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_pfanddaten)
+        self.fld_letzter_imp_pfanddaten.grid(row=21, column=1, sticky='WE', padx=10, pady=10)
 
         # --------------------------
 
@@ -99,6 +108,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_wgr()
         self.update_letzter_import_kdn()
         self.update_letzter_import_artikel()
+        self.update_letzter_import_pfand()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -112,6 +122,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_wgr()
         self.update_letzter_import_kdn()
         self.update_letzter_import_artikel()
+        self.update_letzter_import_pfand()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -216,7 +227,33 @@ class ImportFrame(Frame):
 
         except DatenImportError as de:
             showwarning(
-                title='Fehler beim Import der Kundendaten',
+                title='Fehler beim Import der Artikeldaten',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
+            self.done()
+
+    def import_pfanddaten(self) -> None:
+        '''Importiert die Pfanddaten'''
+
+        for ctrl in self.controls:
+            ctrl.configure(state='disabled')
+
+        try:
+            job_controller = ImportJobController(
+                self.application, self, PfandImporter, db_manager=self.db_manager)
+
+            job_controller.importfile_ermitteln(
+                defaultextension='SCHAPFL-Pfanddatei (*.txt)',
+                filetypes=[
+                    ('Pfand-Datei', '*.txt')
+                ])
+
+            job_controller.starte_import()
+
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import der Pfanddaten',
                 message=de.args[0]
             )
             self.application.log_message(LogLevel.WARN, de.args[0])
@@ -265,6 +302,17 @@ class ImportFrame(Frame):
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_scs_artikel.set('Kein Import vorhanden')
+
+    def update_letzter_import_pfand(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports der Pfanddaten'''
+
+        letzte_aenderung = PfandStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_pfanddaten.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_pfanddaten.set('Kein Import vorhanden')
 
     def schreibe_kj_status(self) -> None:
         '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''

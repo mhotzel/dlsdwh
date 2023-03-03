@@ -278,4 +278,39 @@ class DbManager():
                 Column('fsk_kz', String(1)),
                 Column('notizen', String(255))
             )
+            self.tables['tab_pfand_temp'] = Table(
+                'temp_pfand_t', self.meta_data,
+                Column('quelle', String(255)),
+                Column('hash', String(40), primary_key=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('art_nr', String(40)),
+                Column('pfand_bez', String(255)),
+                Column('pfand_brutto', Numeric(18, 2)),
+                Column('hinweispflicht', String(40)),
+                Column('wgr', String(40)),
+                Column('wgr_bez', String(255))
+            )
+            self.tables['tab_hub_pfand'] = Table(
+                'hub_pfand_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('zuletzt_gesehen', TIMESTAMP()),
+                Column('quelle', String(255)),
+                Column('art_nr', String(255))
+            )
+            self.tables['tab_sat_pfand'] = Table(
+                'sat_pfand_t', self.meta_data,
+                Column('hash', String(40), index=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('gueltig_bis', TIMESTAMP()),
+                Column('gueltig', Boolean(create_constraint=True)),
+                Column('quelle', String(255)),
+                Column('pfand_bez', String(255)),
+                Column('pfand_brutto', Numeric(18, 2)),
+                Column('hinweispflicht', String(40)),
+                Column('wgr', String(40)),
+                Column('wgr_bez', String(255))
+            )
         return self.meta_data

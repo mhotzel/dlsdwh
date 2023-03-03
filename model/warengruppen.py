@@ -41,7 +41,7 @@ class WarengruppenImporter():
         ts = datetime.now()
 
         df_wgr = pd.read_csv(
-            self.import_file, sep=';', decimal=',', encoding='latin1',
+            self.import_file, sep=';', decimal=',', encoding='cp1252',
             usecols=[
                 'WGR_NR', 'UWGR-NR', 'Bezeichnung', 'MwSt.-KZ', 'Rabatt', 'FSKKZ'
             ]

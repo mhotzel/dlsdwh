@@ -41,7 +41,7 @@ class KundenImporter():
         ts = datetime.now()
 
         df_kdn = pd.read_csv(
-            self.import_file, encoding='latin1', sep=';', decimal=',',
+            self.import_file, encoding='cp1252', sep=';', decimal=',',
             usecols=['KDNR','Name', 'Rabattsatz']
         ).rename(
             columns={

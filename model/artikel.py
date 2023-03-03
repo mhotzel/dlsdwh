@@ -49,7 +49,7 @@ class ArtikelImporter():
         ts = datetime.now()
 
         df = pd.read_csv(
-            self.import_file, encoding='latin1', sep=';', decimal=',',
+            self.import_file, encoding='cp1252', sep=';', decimal=',',
             usecols=[
                 'SCSPoolID', 'Strichcode', 'Index', 'Bezeichnung', 'Mengenfaktor', 'VKPreis', 'Preiseinheit',
                 'Kurzcode', 'Bontext', 'Mengeneinheit', 'Mengentyp', 'GPFaktor', 'WGR', 'UWGR', 'RabattKZ', 
