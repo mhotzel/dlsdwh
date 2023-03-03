@@ -11,7 +11,7 @@ from model.db_manager import DbManager
 from model.errors import DatenImportError
 from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
 from model.log_level import LogLevel
-from model.warengruppen import WarengruppenImporter
+from model.warengruppen import WarengruppenImporter, WarengruppenStatus
 
 
 class ImportFrame(Frame):
@@ -89,7 +89,8 @@ class ImportFrame(Frame):
     def show(self) -> None:
         '''Bringt den Frame in den Vordergrund'''
         self.tkraise()
-        self.update_letzter_import()
+        self.update_letzter_import_kj()
+        self.update_letzter_import_wgr()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -99,7 +100,8 @@ class ImportFrame(Frame):
 
     def done(self) -> None:
         '''Wird aufgerufen vom ImportJob, wenn die Verarbeitung abgeschlossen ist'''
-        self.update_letzter_import()
+        self.update_letzter_import_kj()
+        self.update_letzter_import_wgr()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -158,13 +160,24 @@ class ImportFrame(Frame):
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
-    def update_letzter_import(self) -> None:
+    def update_letzter_import_kj(self) -> None:
         '''ermittelt und setzt das Datum den letzten Imports'''
 
         letzte_aenderung = KassenjournalStatus(
             self.application.db_manager).letzte_aenderung
         if letzte_aenderung:
             self.letzter_imp_kassenjournal.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_kassenjournal.set('Kein Import vorhanden')
+
+    def update_letzter_import_wgr(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports'''
+
+        letzte_aenderung = WarengruppenStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_warengruppen.set(
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_kassenjournal.set('Kein Import vorhanden')

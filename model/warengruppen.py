@@ -1,4 +1,3 @@
-from typing import Protocol
 import pandas as pd
 import numpy as np
 from sqlalchemy import Connection, Table, text
@@ -102,7 +101,7 @@ class WarengruppenImporter():
             wt.quelle,
             wt.wgr
             
-        FROM warengruppen_temp_t as wt
+        FROM temp_warengruppen_t as wt
 
         LEFT JOIN hub_warengruppen_t AS wh
             ON 	wt.hash = wh.hash
@@ -130,7 +129,7 @@ class WarengruppenImporter():
                 
             FROM sat_warengruppen_t as ws
 
-            LEFT JOIN warengruppen_temp_t AS wt
+            LEFT JOIN temp_warengruppen_t AS wt
                 ON	wt.hash = ws.hash
 
             WHERE	ws.gueltig = 1
@@ -158,7 +157,7 @@ class WarengruppenImporter():
             wt.rabatt,
             wt.fsk_kz
             
-        FROM warengruppen_temp_t as wt
+        FROM temp_warengruppen_t as wt
 
         LEFT JOIN sat_warengruppen_t AS ws
             ON	wt.hash = ws.hash
@@ -178,10 +177,35 @@ class WarengruppenImporter():
                 wt.eintrag_ts,
                 wt.hash
 
-            FROM warengruppen_temp_t AS wt
+            FROM temp_warengruppen_t AS wt
             JOIN hub_warengruppen_t AS wh
                 ON wh.hash = wt.hash
         ) AS bas
         WHERE bas.hash = hub_warengruppen_t.hash
         '''
         conn.execute(text(sql))
+
+class WarengruppenStatus():
+    '''Holt Informationen zu den gespeicherten Warengruppendaten'''
+
+    def __init__(self, db_manager: DbManager) -> None:
+        super().__init__()
+        self.db_manager = db_manager
+
+    @property
+    def letzte_aenderung(self) -> datetime:
+        '''
+        Ermittelt den letzten Import in der Datenbank.
+        Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
+        '''
+        SQL = """
+        SELECT MAX(hw.zuletzt_gesehen) AS zeitpunkt FROM hub_warengruppen_t AS hw
+        """
+        conn = self.db_manager.get_engine().connect()
+        with conn:
+            result = conn.execute(text(SQL)).fetchone()
+            if result[0]:
+                return datetime.strptime(result[0], '%Y-%m-%d %H:%M:%S.%f')
+            else:
+                return None
+        conn.close()

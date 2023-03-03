@@ -137,7 +137,7 @@ class KassenjournalImporter():
         SELECT
             kjt.*
             
-        FROM kassenjournal_temp_t AS kjt
+        FROM temp_kassenjournal_t AS kjt
 
         LEFT JOIN kassenjournal_t AS kj
             ON	kjt.kasse_nr = kj.kasse_nr
@@ -162,7 +162,7 @@ class KassenjournalImporter():
             END AS rang
             
         FROM
-            kassenjournal_temp_t kjt
+            temp_kassenjournal_t kjt
             
         GROUP BY
             kjt.kasse_nr,
@@ -212,7 +212,7 @@ class KassenjournalImporter():
                 kjt.tse_info,
                 kjt.storno_ref
             FROM
-                kassenjournal_temp_t AS kjt
+                temp_kassenjournal_t AS kjt
         ) as kjt
             ON  btmax.kasse_nr = kjt.kasse_nr
             AND btmax.bon_nr = kjt.bon_nr
@@ -240,7 +240,7 @@ class KassenjournalImporter():
         SELECT
             bt.*
             
-        FROM kassenbons_temp_t AS bt
+        FROM temp_kassenbons_t AS bt
 
         LEFT JOIN kassenbons_t AS b
             ON	bt.hash = b.hash
@@ -252,7 +252,7 @@ class KassenjournalImporter():
     def _belade_bon_pos_temp(self, conn: Connection) -> None:
         '''Aus der Kassenjournal-Zwischentabelle wird die Kassenpositionen-Zwischentabelle befuellt'''
 
-        sql = 'SELECT kjt.* FROM kassenjournal_temp_t AS kjt ORDER BY kjt.kasse_nr, kjt.bon_nr, kjt.pos'
+        sql = 'SELECT kjt.* FROM temp_kassenjournal_t AS kjt ORDER BY kjt.kasse_nr, kjt.bon_nr, kjt.pos'
         df = pd.read_sql_query(text(sql), con=conn)
         df['wgr'] = df['warengruppe'].str.split('|', expand=True)[0].str.strip()
         df['wgr_bez'] = df['warengruppe'].str.split('|', expand=True)[1].str.strip()
@@ -293,7 +293,7 @@ class KassenjournalImporter():
         SELECT
             bt.*
             
-        FROM kassenbons_pos_temp_t AS bt
+        FROM temp_kassenbons_pos_t AS bt
 
         LEFT JOIN kassenbons_pos_t AS b
             ON	bt.hash = b.hash
@@ -329,7 +329,7 @@ class KassenjournalStatus():
         return [mon[0] for mon in result] or []
 
     @property
-    def letzte_aenderung(self) -> date:
+    def letzte_aenderung(self) -> datetime:
         '''
         Ermittelt die letzte Änderung in der Datenbank.
         Wurde also ein Import ausgeführt, der keine Veränderung bewirkte, 
