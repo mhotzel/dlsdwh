@@ -156,23 +156,32 @@ class DbManager():
                 Column('wgr_bez', String(50)),
                 Column('ma_id', Integer())
             )
-            self.tables['tab_warengruppen'] = Table(
-                'warengruppen_t', self.meta_data,
+            self.tables['tab_hub_warengruppen'] = Table(
+                'hub_warengruppen_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
-                Column('wgr', String(40)),
+                Column('zuletzt_gesehen', TIMESTAMP()),
+                Column('quelle', String(255)),
+                Column('wgr', String(40))
+            )
+            self.tables['tab_sat_warengruppen'] = Table(
+                'sat_warengruppen_t', self.meta_data,
+                Column('hash', String(40), index=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('gueltig_bis', TIMESTAMP()),
+                Column('gueltig', Boolean(create_constraint=True)),
                 Column('wgr_bez', String(255)),
                 Column('mwst_kz', String(2)),
                 Column('mwst_satz', Numeric(5, 2)),
                 Column('rabatt', String(1)),
-                Column('fsk_kz', String(12)),
-                Column('gueltig_von', TIMESTAMP()),
-                Column('gueltig_bis', TIMESTAMP()),
-                Column('gueltig', Boolean(create_constraint=True))
+                Column('fsk_kz', String(12))
             )
             self.tables['tab_warengruppen_temp'] = Table(
                 'warengruppen_temp_t', self.meta_data,
+                Column('quelle', String(255)),
                 Column('hash', String(40), primary_key=True),
+                Column('hash_diff', String(40)),
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('wgr', String(40)),
                 Column('wgr_bez', String(255)),
