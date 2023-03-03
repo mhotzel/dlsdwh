@@ -15,20 +15,20 @@ class WarengruppenImporter():
         self.import_file = import_file
         self._listeners = set()
         self.df: pd.DataFrame = None
-        self.tab_wgr_temp: Table = None
+        self.tab_temp: Table = None
 
     def write_data(self) -> None:
         '''
         Schreibt die gelesenen Daten in die Datenbank.
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
-        self.tab_wgr_temp: Table = self.db_manager.tables['tab_warengruppen_temp']
+        self.tab_temp: Table = self.db_manager.tables['tab_warengruppen_temp']
 
         conn = self.db_manager.get_engine().connect()
         with conn:
-            conn.execute(self.tab_wgr_temp.delete())
+            conn.execute(self.tab_temp.delete())
 
-            self.df.to_sql(self.tab_wgr_temp.name, conn,
+            self.df.to_sql(self.tab_temp.name, conn,
                            if_exists='append', index=False)
             conn.commit()
         conn.close()
@@ -83,14 +83,14 @@ class WarengruppenImporter():
 
         conn = self.db_manager.get_engine().connect()
         with conn:
-            self._belade_wgr_hub(conn)
+            self._belade_hub(conn)
             self._update_zuletzt_gesehen(conn)
-            self._loesche_ungueltige_sat_wgr(conn)
-            self._fuege_neue_sat_wgr_ein(conn)
+            self._loesche_ungueltige_sat(conn)
+            self._fuege_neue_sat_ein(conn)
             conn.commit()
         conn.close()
 
-    def _belade_wgr_hub(self, conn: Connection) -> None:
+    def _belade_hub(self, conn: Connection) -> None:
         '''belaedt erstmal den HUB'''
 
         sql = '''
@@ -111,7 +111,7 @@ class WarengruppenImporter():
 
         conn.execute(text(sql))
 
-    def _loesche_ungueltige_sat_wgr(self, conn: Connection) -> None:
+    def _loesche_ungueltige_sat(self, conn: Connection) -> None:
         '''
         Setzt Eintraege in 'sat_warengruppen_t' ungueltig, fuer die aktualisierte Eintraege
         vorhanden sind. Bestehende Eintraege, die nicht in der Eingabedatei vorkommen, bleiben
@@ -138,19 +138,20 @@ class WarengruppenImporter():
         '''
         conn.execute(text(sql))
 
-    def _fuege_neue_sat_wgr_ein(self, conn: Connection) -> None:
+    def _fuege_neue_sat_ein(self, conn: Connection) -> None:
         '''
         Fuegt neue Eintraege aus in 'sat_warengruppen_t' ein bzw. Eintraege, fuer die aktuellere
         Daten vorhanden sind.
         '''
         sql = '''
-        INSERT INTO sat_warengruppen_t (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, wgr_bez, mwst_kz, mwst_satz, rabatt_kz, fsk_kz)
+        INSERT INTO sat_warengruppen_t (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, wgr_bez, mwst_kz, mwst_satz, rabatt_kz, fsk_kz)
         SELECT 
             wt.hash,
             wt.hash_diff,
             wt.eintrag_ts,
             datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
             1 as gueltig,
+            wt.quelle,
             wt.wgr_bez,
             wt.mwst_kz,
             wt.mwst_satz,

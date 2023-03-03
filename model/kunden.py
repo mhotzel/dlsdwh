@@ -15,20 +15,20 @@ class KundenImporter():
         self.import_file = import_file
         self._listeners = set()
         self.df: pd.DataFrame = None
-        self.tab_wgr_temp: Table = None
+        self.tab_temp: Table = None
 
     def write_data(self) -> None:
         '''
         Schreibt die gelesenen Daten in die Datenbank.
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
-        self.tab_wgr_temp: Table = self.db_manager.tables['tab_kunden_temp']
+        self.tab_temp: Table = self.db_manager.tables['tab_kunden_temp']
 
         conn = self.db_manager.get_engine().connect()
         with conn:
-            conn.execute(self.tab_wgr_temp.delete())
+            conn.execute(self.tab_temp.delete())
 
-            self.df.to_sql(self.tab_wgr_temp.name, conn,
+            self.df.to_sql(self.tab_temp.name, conn,
                            if_exists='append', index=False)
             conn.commit()
         conn.close()
@@ -66,7 +66,7 @@ class KundenImporter():
         with conn:
             self._belade_hub(conn)
             self._update_zuletzt_gesehen(conn)
-            self._loesche_ungueltige_sat_wgr(conn)
+            self._loesche_ungueltige_sat(conn)
             self._fuege_neue_sat_ein(conn)
             conn.commit()
         conn.close()
@@ -94,7 +94,7 @@ class KundenImporter():
 
         conn.execute(text(sql))
 
-    def _loesche_ungueltige_sat_wgr(self, conn: Connection) -> None:
+    def _loesche_ungueltige_sat(self, conn: Connection) -> None:
         '''
         Setzt Eintraege in 'sat_kunden_t' ungueltig, fuer die aktualisierte Eintraege
         vorhanden sind. Bestehende Eintraege, die nicht in der Eingabedatei vorkommen, bleiben
@@ -127,13 +127,14 @@ class KundenImporter():
         Daten vorhanden sind.
         '''
         sql = '''
-        INSERT INTO sat_kunden_t (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, kd_name, rabatt_satz)
+        INSERT INTO sat_kunden_t (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, kd_name, rabatt_satz)
         SELECT 
             t.hash,
             t.hash_diff,
             t.eintrag_ts,
             datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
             1 as gueltig,
+            t.quelle,
             t.kd_name,
             t.rabatt_satz
             

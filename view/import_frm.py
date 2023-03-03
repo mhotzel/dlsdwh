@@ -7,6 +7,7 @@ from ttkbootstrap.scrolled import ScrolledText
 
 from controller.controller import Controller
 from controller.job_control import ImportJobController
+from model.artikel import ArtikelImporter, ArtikelStatus
 from model.db_manager import DbManager
 from model.errors import DatenImportError
 from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
@@ -69,7 +70,7 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_kundendaten.grid(row=3, column=1, sticky='WE', padx=10, pady=10)
 
         self.btn_import_scsartikel = Button(
-            self._frm_import, text='Schapfl-Artikelliste importieren', bootstyle='secondary')
+            self._frm_import, text='Schapfl-Artikelliste importieren', bootstyle='secondary', command=self.import_artikeldaten)
         self.btn_import_scsartikel.grid(
             row=20, column=0, sticky='WE', padx=10, pady=10)
         self.controls.add(self.btn_import_scsartikel)
@@ -79,10 +80,6 @@ class ImportFrame(Frame):
             self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_scs_artikel)
         self.fld_letzter_imp_scs_artikel.grid(
             row=20, column=1, sticky='WE', padx=10, pady=10)
-
-        self.btn_kj_infos = Button(
-            self._frm_import, text='Status-Infos SCS-Artikel ermitteln', bootstyle='secondary')
-        self.btn_kj_infos.grid(row=20, column=2, sticky='WE', padx=10, pady=10)
 
         # --------------------------
 
@@ -101,6 +98,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_kj()
         self.update_letzter_import_wgr()
         self.update_letzter_import_kdn()
+        self.update_letzter_import_artikel()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -113,6 +111,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_kj()
         self.update_letzter_import_wgr()
         self.update_letzter_import_kdn()
+        self.update_letzter_import_artikel()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -184,7 +183,33 @@ class ImportFrame(Frame):
             job_controller.importfile_ermitteln(
                 defaultextension='SCHAPFL-Kundendatei (*.txt)',
                 filetypes=[
-                    ('Kundendatei-Datei', '*.txt')
+                    ('Kundendaten-Datei', '*.txt')
+                ])
+
+            job_controller.starte_import()
+
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import der Kundendaten',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
+            self.done()
+
+    def import_artikeldaten(self) -> None:
+        '''Importiert die Artikeldaten'''
+
+        for ctrl in self.controls:
+            ctrl.configure(state='disabled')
+
+        try:
+            job_controller = ImportJobController(
+                self.application, self, ArtikelImporter, db_manager=self.db_manager)
+
+            job_controller.importfile_ermitteln(
+                defaultextension='SCHAPFL-Artikeldatei (*.txt)',
+                filetypes=[
+                    ('Artikel-Datei', '*.txt')
                 ])
 
             job_controller.starte_import()
@@ -229,6 +254,17 @@ class ImportFrame(Frame):
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_kundendaten.set('Kein Import vorhanden')
+
+    def update_letzter_import_artikel(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports der Kundendaten'''
+
+        letzte_aenderung = ArtikelStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_scs_artikel.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_scs_artikel.set('Kein Import vorhanden')
 
     def schreibe_kj_status(self) -> None:
         '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''
