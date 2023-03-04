@@ -319,7 +319,7 @@ class DbManager():
                 Column('hash', String(40), primary_key=True),
                 Column('hash_diff', String(40)),
                 Column('eintrag_ts', TIMESTAMP()),
-                Column('lief_nr', String(255)),
+                Column('lief_nr', String(40)),
                 Column('lief_kdnr', String(255)),
                 Column('lief_name', String(255)),
                 Column('ek_art_uebernahme', String(12)),
@@ -332,7 +332,7 @@ class DbManager():
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
-                Column('lief_nr', String(255), index=True)
+                Column('lief_nr', String(40), index=True)
             )
             self.tables['tab_sat_lieferanten'] = Table(
                 'sat_lieferanten_t', self.meta_data,
@@ -374,5 +374,36 @@ class DbManager():
                 Column('gueltig', Boolean(create_constraint=True)),
                 Column('quelle', String(255)),
                 Column('ean_h', String(40))
+            )
+            self.tables['tab_scs_liefart_temp'] = Table(
+                'temp_scs_liefart_t', self.meta_data,
+                Column('quelle', String(255)),
+                Column('hash', String(40), primary_key=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('ean', String(40)),
+                Column('lief_nr', String(40)),
+                Column('lief_art_nr', String(40)),
+                Column('ek_netto', Numeric(18, 3))
+            )
+            self.tables['tab_scs_hub_liefart'] = Table(
+                'hub_scs_liefart_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('zuletzt_gesehen', TIMESTAMP()),
+                Column('quelle', String(255)),
+                Column('ean', String(40), index=True),
+                Column('lief_nr', String(40), index=True),
+            )
+            self.tables['tab_scs_sat_liefart'] = Table(
+                'sat_scs_liefart_t', self.meta_data,
+                Column('hash', String(40), index=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('gueltig_bis', TIMESTAMP()),
+                Column('gueltig', Boolean(create_constraint=True)),
+                Column('quelle', String(255)),
+                Column('lief_art_nr', String(40)),
+                Column('ek_netto', Numeric(18, 3))
             )
         return self.meta_data

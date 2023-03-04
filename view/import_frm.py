@@ -17,6 +17,7 @@ from model.log_level import LogLevel
 from model.mehrfach_ean import MehrfachEanImporter, MehrfachEanStatus
 from model.pfand import PfandImporter, PfandStatus
 from model.warengruppen import WarengruppenImporter, WarengruppenStatus
+from model.scs_lief_artikel import SCSLieferantenArtikelImporter, SCSLieferantenArtikelStatus
 
 
 class ImportFrame(Frame):
@@ -108,6 +109,14 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_mean = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_mean)
         self.fld_letzter_imp_mean.grid(row=23, column=1, sticky='WE', padx=10, pady=10)
 
+        self.btn_import_scs_liefart = Button(self._frm_import, text='Schapfl-Lieferantenart. importieren', bootstyle='secondary', command=self.import_scs_liefart)
+        self.btn_import_scs_liefart.grid(row=24, column=0, sticky='WE', padx=10, pady=10)
+        self.controls.add(self.btn_import_scs_liefart)
+
+        self.letzter_imp_scs_liefart = StringVar(self._frm_import)
+        self.fld_letzter_imp_scs_liefart = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_scs_liefart)
+        self.fld_letzter_imp_scs_liefart.grid(row=24, column=1, sticky='WE', padx=10, pady=10)
+
         # --------------------------
 
         self._frm_status = LabelFrame(self, text='Status-Infos')
@@ -129,6 +138,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_pfand()
         self.update_letzter_import_lieferanten()
         self.update_letzter_import_mean()
+        self.update_letzter_import_scs_liefart()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -145,6 +155,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_pfand()
         self.update_letzter_import_lieferanten()
         self.update_letzter_import_mean()
+        self.update_letzter_import_scs_liefart()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -327,7 +338,33 @@ class ImportFrame(Frame):
 
         except DatenImportError as de:
             showwarning(
-                title='Fehler beim Import der Lieferanten',
+                title='Fehler beim Import der Mehrfach-EAN',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
+            self.done()
+
+    def import_scs_liefart(self) -> None:
+        '''Importiert die Schapfl-Lieferantenartikel'''
+
+        for ctrl in self.controls:
+            ctrl.configure(state='disabled')
+
+        try:
+            job_controller = ImportJobController(
+                self.application, self, SCSLieferantenArtikelImporter, db_manager=self.db_manager)
+
+            job_controller.importfile_ermitteln(
+                defaultextension='SCHAPFL-Lieferantenartikel-Datei (*.txt)',
+                filetypes=[
+                    ('Lieferantenartikel-Datei', '*.txt')
+                ])
+
+            job_controller.starte_import()
+
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import der Lieferantenartikel',
                 message=de.args[0]
             )
             self.application.log_message(LogLevel.WARN, de.args[0])
@@ -409,6 +446,17 @@ class ImportFrame(Frame):
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_mean.set('Kein Import vorhanden')
+
+    def update_letzter_import_scs_liefart(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports der Schapfl-Lieferantenartikel'''
+
+        letzte_aenderung = SCSLieferantenArtikelStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_scs_liefart.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_scs_liefart.set('Kein Import vorhanden')
 
     def schreibe_kj_status(self) -> None:
         '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''
