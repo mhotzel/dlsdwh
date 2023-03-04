@@ -21,7 +21,7 @@ class MainWindow(Window):
     def __init__(self, cfg: Mapping[str, str]):
         super().__init__(
             title='DLS Warenwirtschaft',
-            themename='litera',
+            themename='pulse',
             # size=(700, 500),
             iconphoto=Path(IMGDIR) / 'logo.png'
         )

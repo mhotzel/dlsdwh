@@ -40,91 +40,91 @@ class ImportFrame(Frame):
 
         self.lbl_headline = Label(
             self._frm_import, text='Letzter Import:', bootstyle='primary')
-        self.lbl_headline.grid(row=0, column=1, sticky='WE', padx=10, pady=10)
+        self.lbl_headline.grid(row=0, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_imp_kassenjournal = Button(
             self._frm_import, text='Kassenjournal importieren', bootstyle='secondary', command=self.import_kassenjournal)
         self.btn_imp_kassenjournal.grid(
-            row=1, column=0, sticky='WE', padx=10, pady=10)
+            row=1, column=0, sticky='WE', padx=5, pady=5)
 
         self.letzter_imp_kassenjournal = StringVar(self._frm_import)
         self.fld_letzter_imp_kassenjournal = Entry(
             self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_kassenjournal)
         self.fld_letzter_imp_kassenjournal.grid(
-            row=1, column=1, sticky='WE', padx=10, pady=10)
+            row=1, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_kj_infos = Button(
             self._frm_import, text='Status-Infos Kassenjournal ermitteln', bootstyle='secondary', command=self.schreibe_kj_status)
-        self.btn_kj_infos.grid(row=1, column=2, sticky='WE', padx=10, pady=10)
+        self.btn_kj_infos.grid(row=1, column=2, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_imp_kassenjournal)
 
         self.btn_import_warengruppen = Button(self._frm_import, text='Warengruppen importieren', bootstyle='secondary', command=self.import_warengruppen)
-        self.btn_import_warengruppen.grid(row=2, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_warengruppen.grid(row=2, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_warengruppen)
 
         self.letzter_imp_warengruppen = StringVar(self._frm_import)
         self.fld_letzter_imp_warengruppen = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_warengruppen)
-        self.fld_letzter_imp_warengruppen.grid(row=2, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_warengruppen.grid(row=2, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_import_kundendaten = Button(self._frm_import, text='Kundendaten importieren', bootstyle='secondary', command=self.import_kundendaten)
-        self.btn_import_kundendaten.grid(row=3, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_kundendaten.grid(row=3, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_kundendaten)
 
         self.letzter_imp_kundendaten = StringVar(self._frm_import)
         self.fld_letzter_imp_kundendaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_kundendaten)
-        self.fld_letzter_imp_kundendaten.grid(row=3, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_kundendaten.grid(row=3, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_import_scsartikel = Button(
             self._frm_import, text='Schapfl-Artikelliste importieren', bootstyle='secondary', command=self.import_artikeldaten)
         self.btn_import_scsartikel.grid(
-            row=20, column=0, sticky='WE', padx=10, pady=10)
+            row=20, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_scsartikel)
 
         self.letzter_imp_scs_artikel = StringVar(self._frm_import)
         self.fld_letzter_imp_scs_artikel = Entry(
             self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_scs_artikel)
         self.fld_letzter_imp_scs_artikel.grid(
-            row=20, column=1, sticky='WE', padx=10, pady=10)
+            row=20, column=1, sticky='WE', padx=5, pady=5)
         
         self.btn_import_pfanddaten = Button(self._frm_import, text='Pfanddaten importieren', bootstyle='secondary', command=self.import_pfanddaten)
-        self.btn_import_pfanddaten.grid(row=21, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_pfanddaten.grid(row=21, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_pfanddaten)
 
         self.letzter_imp_pfanddaten = StringVar(self._frm_import)
         self.fld_letzter_imp_pfanddaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_pfanddaten)
-        self.fld_letzter_imp_pfanddaten.grid(row=21, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_pfanddaten.grid(row=21, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_import_lieferanten = Button(self._frm_import, text='Lieferanten importieren', bootstyle='secondary', command=self.import_lieferanten)
-        self.btn_import_lieferanten.grid(row=22, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_lieferanten.grid(row=22, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_lieferanten)
 
         self.letzter_imp_lieferanten = StringVar(self._frm_import)
         self.fld_letzter_imp_lieferanten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_lieferanten)
-        self.fld_letzter_imp_lieferanten.grid(row=22, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_lieferanten.grid(row=22, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_import_mean = Button(self._frm_import, text='Mehrfach-EAN importieren', bootstyle='secondary', command=self.import_mean)
-        self.btn_import_mean.grid(row=23, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_mean.grid(row=23, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_mean)
 
         self.letzter_imp_mean = StringVar(self._frm_import)
         self.fld_letzter_imp_mean = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_mean)
-        self.fld_letzter_imp_mean.grid(row=23, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_mean.grid(row=23, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_import_scs_liefart = Button(self._frm_import, text='Lieferantenartikel importieren', bootstyle='secondary', command=self.import_scs_liefart)
-        self.btn_import_scs_liefart.grid(row=24, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_scs_liefart.grid(row=24, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_scs_liefart)
 
         self.letzter_imp_scs_liefart = StringVar(self._frm_import)
         self.fld_letzter_imp_scs_liefart = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_scs_liefart)
-        self.fld_letzter_imp_scs_liefart.grid(row=24, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_scs_liefart.grid(row=24, column=1, sticky='WE', padx=5, pady=5)
 
         self.btn_import_presseartikel = Button(self._frm_import, text='Presseartikel importieren', bootstyle='secondary', command=self.import_presseartikel)
-        self.btn_import_presseartikel.grid(row=25, column=0, sticky='WE', padx=10, pady=10)
+        self.btn_import_presseartikel.grid(row=25, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_presseartikel)
 
         self.letzter_imp_presseartikel = StringVar(self._frm_import)
         self.fld_letzter_imp_presseartikel = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_presseartikel)
-        self.fld_letzter_imp_presseartikel.grid(row=25, column=1, sticky='WE', padx=10, pady=10)
+        self.fld_letzter_imp_presseartikel.grid(row=25, column=1, sticky='WE', padx=5, pady=5)
 
         # --------------------------
 
@@ -133,7 +133,7 @@ class ImportFrame(Frame):
         self._frm_status.columnconfigure(1, weight=1)
 
         self.fld_msg = ScrolledText(
-            self._frm_status, height=10, width=120, state='disabled')
+            self._frm_status, height=10, width=80, state='disabled')
         self.fld_msg.grid(row=1, column=0, columnspan=2,
                           sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
 

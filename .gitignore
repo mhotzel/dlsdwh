@@ -5,3 +5,6 @@ __pycache__
 Pipfile.lock
 .DS_Store
 jupyter-tests/
+dist/
+build/
+DlsWWS.spec
