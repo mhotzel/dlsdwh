@@ -12,6 +12,7 @@ from model.db_manager import DbManager
 from model.errors import DatenImportError
 from model.kassenjournal import KassenjournalImporter, KassenjournalStatus
 from model.kunden import KundenImporter, KundenStatus
+from model.lieferanten import LieferantenImporter, LieferantenStatus
 from model.log_level import LogLevel
 from model.pfand import PfandImporter, PfandStatus
 from model.warengruppen import WarengruppenImporter, WarengruppenStatus
@@ -90,6 +91,14 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_pfanddaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_pfanddaten)
         self.fld_letzter_imp_pfanddaten.grid(row=21, column=1, sticky='WE', padx=10, pady=10)
 
+        self.btn_import_lieferanten = Button(self._frm_import, text='Lieferanten importieren', bootstyle='secondary', command=self.import_lieferanten)
+        self.btn_import_lieferanten.grid(row=22, column=0, sticky='WE', padx=10, pady=10)
+        self.controls.add(self.btn_import_lieferanten)
+
+        self.letzter_imp_lieferanten = StringVar(self._frm_import)
+        self.fld_letzter_imp_lieferanten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_lieferanten)
+        self.fld_letzter_imp_lieferanten.grid(row=22, column=1, sticky='WE', padx=10, pady=10)
+
         # --------------------------
 
         self._frm_status = LabelFrame(self, text='Status-Infos')
@@ -109,6 +118,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_kdn()
         self.update_letzter_import_artikel()
         self.update_letzter_import_pfand()
+        self.update_letzter_import_lieferanten()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -123,6 +133,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_kdn()
         self.update_letzter_import_artikel()
         self.update_letzter_import_pfand()
+        self.update_letzter_import_lieferanten()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -259,6 +270,32 @@ class ImportFrame(Frame):
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
+    def import_lieferanten(self) -> None:
+        '''Importiert die Pfanddaten'''
+
+        for ctrl in self.controls:
+            ctrl.configure(state='disabled')
+
+        try:
+            job_controller = ImportJobController(
+                self.application, self, LieferantenImporter, db_manager=self.db_manager)
+
+            job_controller.importfile_ermitteln(
+                defaultextension='SCHAPFL-Lieferantendatei (*.txt)',
+                filetypes=[
+                    ('Lieferantendatei', '*.txt')
+                ])
+
+            job_controller.starte_import()
+
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import der Lieferanten',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
+            self.done()
+
     def update_letzter_import_kj(self) -> None:
         '''ermittelt und setzt das Datum den letzten Imports des Kassenjournals'''
 
@@ -313,6 +350,17 @@ class ImportFrame(Frame):
                 letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
         else:
             self.letzter_imp_pfanddaten.set('Kein Import vorhanden')
+
+    def update_letzter_import_lieferanten(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports der Lieferanten'''
+
+        letzte_aenderung = LieferantenStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_lieferanten.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_lieferanten.set('Kein Import vorhanden')
 
     def schreibe_kj_status(self) -> None:
         '''ermittelt und schreibt Status-Infos zum Kassenjournal in das Statusfeld'''

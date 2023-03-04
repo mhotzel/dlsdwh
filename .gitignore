@@ -4,3 +4,10 @@ __pycache__
 .venv
 Pipfile.lock
 .DS_Store
+jupyter-tests/dlsdwh-auswertungen.ipynb
+jupyter-tests/scs_artikeldaten.ipynb
+jupyter-tests/scs_kunden.ipynb
+jupyter-tests/scs_lieferanten.ipynb
+jupyter-tests/scs_pfand.ipynb
+jupyter-tests/scs_warengruppen.ipynb
+jupyter-tests/.ipynb_checkpoints/scs_lieferanten-checkpoint.ipynb

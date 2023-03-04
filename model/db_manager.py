@@ -313,4 +313,39 @@ class DbManager():
                 Column('wgr', String(40)),
                 Column('wgr_bez', String(255))
             )
+            self.tables['tab_lieferanten_temp'] = Table(
+                'temp_lieferanten_t', self.meta_data,
+                Column('quelle', String(255)),
+                Column('hash', String(40), primary_key=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('lief_nr', String(255)),
+                Column('lief_kdnr', String(255)),
+                Column('lief_name', String(255)),
+                Column('ek_art_uebernahme', String(12)),
+                Column('ist_hauptlief', String(12)),
+                Column('art_import_logik', String(12))
+            )
+            self.tables['tab_hub_lieferanten'] = Table(
+                'hub_lieferanten_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('zuletzt_gesehen', TIMESTAMP()),
+                Column('quelle', String(255)),
+                Column('lief_nr', String(255))
+            )
+            self.tables['tab_sat_lieferanten'] = Table(
+                'sat_lieferanten_t', self.meta_data,
+                Column('hash', String(40), index=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('gueltig_bis', TIMESTAMP()),
+                Column('gueltig', Boolean(create_constraint=True)),
+                Column('quelle', String(255)),
+                Column('lief_kdnr', String(255)),
+                Column('lief_name', String(255)),
+                Column('ek_art_uebernahme', String(12)),
+                Column('ist_hauptlief', String(12)),
+                Column('art_import_logik', String(12))
+            )
         return self.meta_data
