@@ -4,16 +4,7 @@ from sqlalchemy import Connection, Table, text
 from datetime import datetime
 from hashlib import md5
 
-from model.db_manager import DbManager
-
-def concat(df: pd.DataFrame):
-    res = None
-    for i, col in enumerate(df.columns):
-        if i == 0:
-            res = df[col].astype(str)
-        else:
-            res += ':' + df[col].astype(str)
-    return res
+from model.db_manager import DbManager, concat
 
 class ArtikelImporter():
     '''Uebernimmt den Import der Kassenartikel in die Datenbank'''
@@ -79,8 +70,7 @@ class ArtikelImporter():
                     'bontext', 'mengeneinheit', 'mengentyp', 'gpfaktor', 'wgr', 'rabatt_kz', 'preisgebunden_kz',
                     'fsk_kz', 'notizen']])
 
-        df['hash_diff'].to_csv('ausgabe.csv', sep=';', index=False)
-        df['quelle'] = 'scs_export'
+        df['quelle'] = 'scs_export_artikel'
         df['eintrag_ts'] = pd.to_datetime(ts)
         df['preiseinheit'] = np.where(df['preiseinheit'] == 0, 1, df['preiseinheit'])
 
@@ -222,7 +212,7 @@ class ArtikelStatus():
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
         '''
         SQL = """
-        SELECT MAX(h.zuletzt_gesehen) AS zeitpunkt FROM hub_artikel_t AS h
+        SELECT MAX(h.zuletzt_gesehen) AS zeitpunkt FROM hub_artikel_t AS h WHERE h.quelle = 'scs_export_artikel'
         """
         conn = self.db_manager.get_engine().connect()
         with conn:

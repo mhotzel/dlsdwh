@@ -4,16 +4,7 @@ from sqlalchemy import Connection, Table, text
 from datetime import datetime
 from hashlib import md5
 
-from model.db_manager import DbManager
-
-def concat(df: pd.DataFrame):
-    res = None
-    for i, col in enumerate(df.columns):
-        if i == 0:
-            res = df[col].astype(str)
-        else:
-            res += ':' + df[col].astype(str)
-    return res
+from model.db_manager import DbManager, concat
 
 class LieferantenImporter():
     '''Uebernimmt den Import der Lieferantendaten in die Datenbank'''
@@ -70,7 +61,7 @@ class LieferantenImporter():
         df['hash'] = df.lief_nr.astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['hash_diff'] = concat(df[['lief_kdnr', 'lief_name', 'ek_art_uebernahme', 'ist_hauptlief', 'art_import_logik']]).astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['eintrag_ts'] = pd.to_datetime(ts)
-        df['quelle'] = 'scs_export'
+        df['quelle'] = 'scs_export_lieferanten'
 
         self.df = df
 

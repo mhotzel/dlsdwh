@@ -4,16 +4,7 @@ from sqlalchemy import Connection, Table, text
 from datetime import datetime
 from hashlib import md5
 
-from model.db_manager import DbManager
-
-def concat(df: pd.DataFrame):
-    res = None
-    for i, col in enumerate(df.columns):
-        if i == 0:
-            res = df[col].astype(str)
-        else:
-            res += ':' + df[col].astype(str)
-    return res
+from model.db_manager import DbManager, concat
 
 class MehrfachEanImporter():
     '''Uebernimmt den Import der Mehrfach-EANs in die Datenbank'''
@@ -61,7 +52,7 @@ class MehrfachEanImporter():
         df['hash'] = df['ean_m'].astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['hash_diff'] = df['ean_h'].astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['eintrag_ts'] = pd.to_datetime(ts)
-        df['quelle'] = 'scs_export'
+        df['quelle'] = 'scs_export_mehrfach-ean'
 
         self.df = df
 

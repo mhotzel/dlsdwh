@@ -70,11 +70,11 @@ class ImportJobController():
         self.job_owner = job_owner
         self.importer_clzz = importer_clzz
 
-    def importfile_ermitteln(self, filetypes: List[Tuple[str, str]], defaultextension: str) -> None:
+    def importfile_ermitteln(self, title: str, filetypes: List[Tuple[str, str]], defaultextension: str) -> None:
         '''Ermittelt die zu importierende Datei'''
 
         self.filenames = askopenfilenames(
-            title='Importdatei auswählen',
+            title=f'Importdatei für {title} auswählen',
             defaultextension=defaultextension,
             filetypes=filetypes
         )

@@ -4,7 +4,7 @@ from hashlib import md5
 import pandas as pd
 from sqlalchemy import Connection, Table, text
 
-from model.db_manager import DbManager
+from model.db_manager import DbManager, concat
 
 
 class WarengruppenImporter():
@@ -72,7 +72,7 @@ class WarengruppenImporter():
             str) + ':' + df_wgr['rabatt_kz'] + ':' + df_wgr['fsk_kz'].astype(str)).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
         df_wgr['hash'] = df_wgr['wgr'].apply(
             lambda s: md5(s.encode('utf-8')).hexdigest())
-        df_wgr['quelle'] = 'scs_export'
+        df_wgr['quelle'] = 'scs_export_warengruppen'
         df_wgr['mwst_kz'] = df_wgr['mwst_kz'].astype(str)
         df_wgr['fsk_kz'] = df_wgr['fsk_kz'].astype(str)
 

@@ -4,16 +4,7 @@ from sqlalchemy import Connection, Table, text
 from datetime import datetime
 from hashlib import md5
 
-from model.db_manager import DbManager
-
-def concat(df: pd.DataFrame):
-    res = None
-    for i, col in enumerate(df.columns):
-        if i == 0:
-            res = df[col].astype(str)
-        else:
-            res += ':' + df[col].astype(str)
-    return res
+from model.db_manager import DbManager, concat
 
 class PfandImporter():
     '''Uebernimmt den Import der Pfandwerte in die Datenbank'''
@@ -68,7 +59,7 @@ class PfandImporter():
         df['wgr'] = df['wgr'].str.cat(df['uwgr'], ':')
         df = df.drop(columns=['uwgr'])
         df['hash'] = df['art_nr'].astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
-        df['quelle'] = 'scs_export'
+        df['quelle'] = 'scs_export_pfand'
         df['hash_diff'] = concat(df[['pfand_bez', 'pfand_brutto', 'hinweispflicht', 'wgr', 'wgr_bez']]).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
         df['eintrag_ts'] = pd.to_datetime(ts)
         df = df[ ~df['art_nr'].isna() ].copy()

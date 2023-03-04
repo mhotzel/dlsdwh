@@ -1,9 +1,19 @@
 from pathlib import Path
+import pandas as pd
 
 from sqlalchemy import (TIMESTAMP, URL, BigInteger, Boolean, Column, Date,
                         DateTime, Engine, Integer, MetaData, Numeric, String,
                         Table, create_engine)
 
+def concat(df: pd.DataFrame):
+    '''Bereitet ein DataFrame so auf, dass es einfacher gehasht werden kann'''
+    res = None
+    for i, col in enumerate(df.columns):
+        if i == 0:
+            res = df[col].astype(str).str.strip()
+        else:
+            res += ':' + df[col].astype(str).str.strip()
+    return res
 
 class DbManager():
     '''Managed die Datenbankverbindung'''
@@ -260,7 +270,6 @@ class DbManager():
                 Column('gueltig_bis', TIMESTAMP()),
                 Column('gueltig', Boolean(create_constraint=True)),
                 Column('quelle', String(255)),
-                Column('art_nr', String(40)),
                 Column('idx', Integer()),
                 Column('scs_pool_id', BigInteger()),
                 Column('art_bez', String(255)),
@@ -406,4 +415,5 @@ class DbManager():
                 Column('lief_art_nr', String(40)),
                 Column('ek_netto', Numeric(18, 3))
             )
+
         return self.meta_data

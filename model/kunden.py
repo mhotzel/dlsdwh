@@ -53,7 +53,7 @@ class KundenImporter():
         df_kdn['kdnr'] = df_kdn['kdnr'].astype(str)
         df_kdn['rabatt_satz'] = df_kdn['rabatt_satz'].astype(np.float64)
         df_kdn['eintrag_ts'] = pd.to_datetime(ts)
-        df_kdn['quelle'] = 'scs_export'
+        df_kdn['quelle'] = 'scs_export_kunden'
         df_kdn['hash'] = df_kdn['kdnr'].astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
         df_kdn['hash_diff'] = (df_kdn['kd_name'].astype(str) + ':' + df_kdn['rabatt_satz'].astype(str)).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
 

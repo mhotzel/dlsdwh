@@ -4,17 +4,7 @@ from sqlalchemy import Connection, Table, text
 from datetime import datetime
 from hashlib import md5
 
-from model.db_manager import DbManager
-
-def concat(df: pd.DataFrame):
-    '''Fuegt pandas-Series zusammen, um diese einfacher hashen zu koennen'''
-    res = None
-    for i, col in enumerate(df.columns):
-        if i == 0:
-            res = df[col].astype(str)
-        else:
-            res += ':' + df[col].astype(str)
-    return res
+from model.db_manager import DbManager, concat
 
 class SCSLieferantenArtikelImporter():
     '''Uebernimmt den Import der Schapfl-Lieferantenartikel in die Datenbank'''
@@ -58,7 +48,7 @@ class SCSLieferantenArtikelImporter():
         df['hash'] = concat(df[['ean', 'lief_nr']]).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['hash_diff'] = concat(df[['lief_art_nr', 'ek_netto']]).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['eintrag_ts'] = pd.to_datetime(ts)
-        df['quelle'] = 'scs_export'
+        df['quelle'] = 'scs_export_lieferantenartikel'
 
         self.df = df
 
@@ -185,7 +175,7 @@ class SCSLieferantenArtikelStatus():
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
         '''
         SQL = """
-        SELECT MAX(h.zuletzt_gesehen) AS zeitpunkt FROM hub_scs_liefart_t AS h
+        SELECT MAX(h.zuletzt_gesehen) AS zeitpunkt FROM hub_scs_liefart_t AS h WHERE h.quelle = 'scs_export_lieferantenartikel'
         """
         conn = self.db_manager.get_engine().connect()
         with conn:

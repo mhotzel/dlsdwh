@@ -54,6 +54,7 @@ class KassenjournalImporter():
         muss dann die Uebertragung in die Zieltabelle mittels ::update_table gestartet werden.
         '''
 
+        ts = datetime.now()
         df = pd.read_csv(
             self.import_file, sep=';', decimal=',', encoding='utf8',
             usecols=['Kassen-Nr.', 'Bon-Nr.', 'Zeitpunkt', 'Beginn', 'Verkäufer', 'Kunden-Nr.', 'Bon-Summe', 'Typ', 'Artikelnummer',
@@ -98,8 +99,7 @@ class KassenjournalImporter():
 
         df['mengenfaktor'] = df.mengenfaktor.where(
             ~df.mengenfaktor.isna(), 1).astype(int)
-        df['eintrag_ts'] = datetime.now().isoformat()
-        df['eintrag_ts'] = pd.to_datetime(df['eintrag_ts'])
+        df['eintrag_ts'] = pd.to_datetime(ts)
         df['pos'] = df[['bon_nr']].groupby('bon_nr').cumcount()
         df['bon_beginn'] = df['bon_beginn'].where(
             ~df['bon_beginn'].isna(), df['bon_abschluss'])

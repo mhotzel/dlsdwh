@@ -18,6 +18,7 @@ from model.mehrfach_ean import MehrfachEanImporter, MehrfachEanStatus
 from model.pfand import PfandImporter, PfandStatus
 from model.warengruppen import WarengruppenImporter, WarengruppenStatus
 from model.scs_lief_artikel import SCSLieferantenArtikelImporter, SCSLieferantenArtikelStatus
+from model.presseartikel import PresseArtikelImporter, PresseArtikelStatus
 
 
 class ImportFrame(Frame):
@@ -109,13 +110,21 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_mean = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_mean)
         self.fld_letzter_imp_mean.grid(row=23, column=1, sticky='WE', padx=10, pady=10)
 
-        self.btn_import_scs_liefart = Button(self._frm_import, text='Schapfl-Lieferantenart. importieren', bootstyle='secondary', command=self.import_scs_liefart)
+        self.btn_import_scs_liefart = Button(self._frm_import, text='Lieferantenartikel importieren', bootstyle='secondary', command=self.import_scs_liefart)
         self.btn_import_scs_liefart.grid(row=24, column=0, sticky='WE', padx=10, pady=10)
         self.controls.add(self.btn_import_scs_liefart)
 
         self.letzter_imp_scs_liefart = StringVar(self._frm_import)
         self.fld_letzter_imp_scs_liefart = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_scs_liefart)
         self.fld_letzter_imp_scs_liefart.grid(row=24, column=1, sticky='WE', padx=10, pady=10)
+
+        self.btn_import_presseartikel = Button(self._frm_import, text='Presseartikel importieren', bootstyle='secondary', command=self.import_presseartikel)
+        self.btn_import_presseartikel.grid(row=25, column=0, sticky='WE', padx=10, pady=10)
+        self.controls.add(self.btn_import_presseartikel)
+
+        self.letzter_imp_presseartikel = StringVar(self._frm_import)
+        self.fld_letzter_imp_presseartikel = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_presseartikel)
+        self.fld_letzter_imp_presseartikel.grid(row=25, column=1, sticky='WE', padx=10, pady=10)
 
         # --------------------------
 
@@ -139,6 +148,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_lieferanten()
         self.update_letzter_import_mean()
         self.update_letzter_import_scs_liefart()
+        self.update_letzter_import_presseartikel()
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
@@ -156,6 +166,7 @@ class ImportFrame(Frame):
         self.update_letzter_import_lieferanten()
         self.update_letzter_import_mean()
         self.update_letzter_import_scs_liefart()
+        self.update_letzter_import_presseartikel()
 
         for ctrl in self.controls:
             ctrl.configure(state='normal')
@@ -172,6 +183,7 @@ class ImportFrame(Frame):
                 self.application, self, KassenjournalImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Kassenjournal',
                 defaultextension='SCHAPFL-Kassenjournaldatei (*.csv)',
                 filetypes=[
                     ('Kassenjournal-Datei', '*.csv')
@@ -199,6 +211,7 @@ class ImportFrame(Frame):
                 self.application, self, WarengruppenImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Warengruppen',
                 defaultextension='SCHAPFL-Warengruppendatei (*.txt)',
                 filetypes=[
                     ('Warengruppen-Datei', '*.txt')
@@ -225,6 +238,7 @@ class ImportFrame(Frame):
                 self.application, self, KundenImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Kundendaten',
                 defaultextension='SCHAPFL-Kundendatei (*.txt)',
                 filetypes=[
                     ('Kundendaten-Datei', '*.txt')
@@ -251,6 +265,7 @@ class ImportFrame(Frame):
                 self.application, self, ArtikelImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Artikeldaten',
                 defaultextension='SCHAPFL-Artikeldatei (*.txt)',
                 filetypes=[
                     ('Artikel-Datei', '*.txt')
@@ -277,6 +292,7 @@ class ImportFrame(Frame):
                 self.application, self, PfandImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Pfanddaten',
                 defaultextension='SCHAPFL-Pfanddatei (*.txt)',
                 filetypes=[
                     ('Pfand-Datei', '*.txt')
@@ -303,6 +319,7 @@ class ImportFrame(Frame):
                 self.application, self, LieferantenImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Lieferanten',
                 defaultextension='SCHAPFL-Lieferantendatei (*.txt)',
                 filetypes=[
                     ('Lieferantendatei', '*.txt')
@@ -329,6 +346,7 @@ class ImportFrame(Frame):
                 self.application, self, MehrfachEanImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Mehrfach-EAN',
                 defaultextension='SCHAPFL-Mehrfach-EAN-Datei (*.txt)',
                 filetypes=[
                     ('Mehrfach-EAN-Datei', '*.txt')
@@ -355,6 +373,7 @@ class ImportFrame(Frame):
                 self.application, self, SCSLieferantenArtikelImporter, db_manager=self.db_manager)
 
             job_controller.importfile_ermitteln(
+                'Lieferantenartikel',
                 defaultextension='SCHAPFL-Lieferantenartikel-Datei (*.txt)',
                 filetypes=[
                     ('Lieferantenartikel-Datei', '*.txt')
@@ -365,6 +384,33 @@ class ImportFrame(Frame):
         except DatenImportError as de:
             showwarning(
                 title='Fehler beim Import der Lieferantenartikel',
+                message=de.args[0]
+            )
+            self.application.log_message(LogLevel.WARN, de.args[0])
+            self.done()
+        
+    def import_presseartikel(self) -> None:
+        '''Importiert die Schapfl-Presseartikel'''
+
+        for ctrl in self.controls:
+            ctrl.configure(state='disabled')
+
+        try:
+            job_controller = ImportJobController(
+                self.application, self, PresseArtikelImporter, db_manager=self.db_manager)
+
+            job_controller.importfile_ermitteln(
+                'Presseartikel',
+                defaultextension='SCHAPFL-Presseartikel-Datei (*.txt)',
+                filetypes=[
+                    ('Presseartikel-Datei', '*.txt')
+                ])
+
+            job_controller.starte_import()
+
+        except DatenImportError as de:
+            showwarning(
+                title='Fehler beim Import der Presseartikel',
                 message=de.args[0]
             )
             self.application.log_message(LogLevel.WARN, de.args[0])
@@ -474,3 +520,14 @@ class ImportFrame(Frame):
                 END, f'  Keine Kassenjournaldaten vorhanden\n')
         self.fld_msg.text.insert(END, f'\n')
         self.fld_msg.text.configure(state='disabled')
+
+    def update_letzter_import_presseartikel(self) -> None:
+        '''ermittelt und setzt das Datum den letzten Imports der Schapfl-Presseartikel'''
+
+        letzte_aenderung = PresseArtikelStatus(
+            self.application.db_manager).letzte_aenderung
+        if letzte_aenderung:
+            self.letzter_imp_presseartikel.set(
+                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+        else:
+            self.letzter_imp_presseartikel.set('Kein Import vorhanden')
