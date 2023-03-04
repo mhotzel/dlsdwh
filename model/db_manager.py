@@ -162,7 +162,7 @@ class DbManager():
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
-                Column('wgr', String(40))
+                Column('wgr', String(40), index=True)
             )
             self.tables['tab_sat_warengruppen'] = Table(
                 'sat_warengruppen_t', self.meta_data,
@@ -207,7 +207,7 @@ class DbManager():
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
-                Column('kdnr', String(255))
+                Column('kdnr', String(255), index=True)
             )
             self.tables['tab_sat_kunden'] = Table(
                 'sat_kunden_t', self.meta_data,
@@ -250,7 +250,7 @@ class DbManager():
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
-                Column('art_nr', String(255))
+                Column('art_nr', String(255), index=True)
             )
             self.tables['tab_sat_artikel'] = Table(
                 'sat_artikel_t', self.meta_data,
@@ -297,7 +297,7 @@ class DbManager():
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
-                Column('art_nr', String(255))
+                Column('art_nr', String(255), index=True)
             )
             self.tables['tab_sat_pfand'] = Table(
                 'sat_pfand_t', self.meta_data,
@@ -332,7 +332,7 @@ class DbManager():
                 Column('eintrag_ts', TIMESTAMP()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
-                Column('lief_nr', String(255))
+                Column('lief_nr', String(255), index=True)
             )
             self.tables['tab_sat_lieferanten'] = Table(
                 'sat_lieferanten_t', self.meta_data,
@@ -347,5 +347,32 @@ class DbManager():
                 Column('ek_art_uebernahme', String(12)),
                 Column('ist_hauptlief', String(12)),
                 Column('art_import_logik', String(12))
+            )
+            self.tables['tab_mean_temp'] = Table(
+                'temp_mean_t', self.meta_data,
+                Column('quelle', String(255)),
+                Column('hash', String(40), primary_key=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('ean_m', String(40)),
+                Column('ean_h', String(40))
+            )
+            self.tables['tab_hub_mean'] = Table(
+                'hub_mean_t', self.meta_data,
+                Column('hash', String(40), primary_key=True),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('zuletzt_gesehen', TIMESTAMP()),
+                Column('quelle', String(255)),
+                Column('ean_m', String(40), index=True),
+            )
+            self.tables['tab_sat_mean'] = Table(
+                'sat_mean_t', self.meta_data,
+                Column('hash', String(40), index=True),
+                Column('hash_diff', String(40)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('gueltig_bis', TIMESTAMP()),
+                Column('gueltig', Boolean(create_constraint=True)),
+                Column('quelle', String(255)),
+                Column('ean_h', String(40))
             )
         return self.meta_data
