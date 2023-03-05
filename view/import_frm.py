@@ -133,7 +133,7 @@ class ImportFrame(Frame):
         self._frm_status.columnconfigure(1, weight=1)
 
         self.fld_msg = ScrolledText(
-            self._frm_status, height=10, width=80, state='disabled')
+            self._frm_status, height=10, width=100, state='disabled')
         self.fld_msg.grid(row=1, column=0, columnspan=2,
                           sticky='WE', padx=10, pady=10, ipadx=10, ipady=10)
 

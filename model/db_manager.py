@@ -166,6 +166,24 @@ class DbManager():
                 Column('wgr_bez', String(50)),
                 Column('ma_id', Integer())
             )
+            self.tables['tab_kalender'] = Table(
+                'kalender_t', self.meta_data,
+                Column('datum', Date, primary_key=True),
+                Column('jahr', Integer()),
+                Column('monat', Integer()),
+                Column('tag', Integer()),
+                Column('wtag', Integer()),
+                Column('kw', Integer())
+            )
+            self.tables['tab_temp_kalender'] = Table(
+                'temp_kalender_t', self.meta_data,
+                Column('datum', Date(), primary_key=True),
+                Column('jahr', Integer()),
+                Column('monat', Integer()),
+                Column('tag', Integer()),
+                Column('wtag', Integer()),
+                Column('kw', Integer())
+            )
             self.tables['tab_hub_warengruppen'] = Table(
                 'hub_warengruppen_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),

@@ -121,11 +121,12 @@ class KassenjournalImporter():
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabellen gestartet.'''
         conn = self.db_manager.get_engine().connect()
         with conn:
-            #self._fuelle_kassenjournal(conn)
+            # self._fuelle_kassenjournal(conn)
             self._belade_bons_temp(conn)
             self._belade_bons(conn)
             self._belade_bon_pos_temp(conn)
             self._belade_bon_pos(conn)
+            self._belade_kalender(conn)
             conn.commit()
         conn.close()
 
@@ -228,7 +229,7 @@ class KassenjournalImporter():
             df_bon_zwischen.bon_abschluss)
         df_bon_zwischen['bon_datum'] = pd.to_datetime(
             df_bon_zwischen.bon_abschluss).dt.date
-        
+
         conn.execute(self.tab_bons_temp.delete())
         df_bon_zwischen.to_sql(self.tab_bons_temp.name,
                                conn, index=False, if_exists='append')
@@ -254,15 +255,21 @@ class KassenjournalImporter():
 
         sql = 'SELECT kjt.* FROM temp_kassenjournal_t AS kjt ORDER BY kjt.kasse_nr, kjt.bon_nr, kjt.pos'
         df = pd.read_sql_query(text(sql), con=conn)
-        df['wgr'] = df['warengruppe'].str.split('|', expand=True)[0].str.strip()
-        df['wgr_bez'] = df['warengruppe'].str.split('|', expand=True)[1].str.strip()
+        df['wgr'] = df['warengruppe'].str.split(
+            '|', expand=True)[0].str.strip()
+        df['wgr_bez'] = df['warengruppe'].str.split('|', expand=True)[
+            1].str.strip()
         df['ma_id'] = df['ma'].str.split('|', expand=True)[0]
 
-        df['wgr'] = df['wgr'].where(~(df['warengruppe'].str.contains('fehlt', case=False) & df['art_bez'].str.contains('einzahlung', case=False) & df['preis_gesamt'] != 0), "9001:1")
-        df['wgr'] = df['wgr'].where(~(df['warengruppe'].str.contains('fehlt', case=False) & df['art_bez'].str.contains('auszahlung', case=False) & df['preis_gesamt'] != 0), "9001:2")
-        df['wgr'] = df['wgr'].where(~(df['wgr'].astype(str).str.contains('fehlt', case=False)), "0:0")
+        df['wgr'] = df['wgr'].where(~(df['warengruppe'].str.contains('fehlt', case=False) & df['art_bez'].str.contains(
+            'einzahlung', case=False) & df['preis_gesamt'] != 0), "9001:1")
+        df['wgr'] = df['wgr'].where(~(df['warengruppe'].str.contains('fehlt', case=False) & df['art_bez'].str.contains(
+            'auszahlung', case=False) & df['preis_gesamt'] != 0), "9001:2")
+        df['wgr'] = df['wgr'].where(
+            ~(df['wgr'].astype(str).str.contains('fehlt', case=False)), "0:0")
 
-        df['hash_bon'] = (df['kasse_nr'].astype(str) + ":" + df['bon_nr'].astype(str)).apply(lambda data: md5(data.encode('utf-8')).hexdigest())
+        df['hash_bon'] = (df['kasse_nr'].astype(str) + ":" + df['bon_nr'].astype(str)
+                          ).apply(lambda data: md5(data.encode('utf-8')).hexdigest())
 
         df = df.drop(
             columns=[
@@ -270,20 +277,21 @@ class KassenjournalImporter():
                 'typ', 'kdnr', 'bon_typ', 'warengruppe', 'storno_ref',
                 'tse_info', 'infotext'].copy()
         )
-        
+
         df['hash_fuehrend'] = None
         old_pos = None
         for i in range(len(df)):
             if not old_pos:
                 old_pos = df.loc[i, "hash"]
-            
+
             if not df.loc[i, "art_nr"] == '-':
                 df.loc[i, 'hash_fuehrend'] = df.loc[i, "hash"]
                 old_pos = df.loc[i, "hash"]
             else:
                 df.loc[i, 'hash_fuehrend'] = old_pos
         conn.execute(self.tab_bon_pos_temp.delete())
-        df.to_sql(self.tab_bon_pos_temp.name, conn, index=False, if_exists='append')
+        df.to_sql(self.tab_bon_pos_temp.name, conn,
+                  index=False, if_exists='append')
 
     def _belade_bon_pos(self, conn: Connection) -> None:
         '''Aus der Bonpositionen-Zwischentabelle wird die Bonpositionen-Zieltabelle befuellt'''
@@ -301,6 +309,44 @@ class KassenjournalImporter():
         WHERE b.hash IS NULL
         '''
         conn.execute(text(sql))
+
+    def _belade_kalender(self, conn: Connection) -> None:
+        '''
+        Laedt die vergebenen Datuemer in den Bons, ermittelt dazu Jahr, Monat, Tag, Wochentag und Kalenderwoche und schreibt diese in die Kalender-Zwischentabelle
+        '''
+        sql = 'SELECT DISTINCT kb.bon_datum FROM kassenbons_t AS kb ORDER BY 1'
+        df_tage = pd.read_sql(text(sql), conn)
+
+        df_tage['bon_datum'] = pd.to_datetime(df_tage['bon_datum'])
+        df_tage['datum'] = df_tage['bon_datum'].dt.strftime('%Y-%m-%d').astype(str)
+        df_tage['jahr'] = df_tage['bon_datum'].dt.strftime('%Y').astype(int)
+        df_tage['monat'] = df_tage['bon_datum'].dt.strftime('%m').astype(int)
+        df_tage['tag'] = df_tage['bon_datum'].dt.strftime('%d').astype(int)
+        df_tage['wtag'] = df_tage['bon_datum'].dt.strftime('%u').astype(int)
+        df_tage['kw'] = df_tage['bon_datum'].dt.strftime('%V').astype(int)
+        df_tage = df_tage.drop(columns=['bon_datum'])
+
+        conn.execute(text('DELETE FROM temp_kalender_t'))
+        df_tage.to_sql('temp_kalender_t', conn, if_exists='append', index=False)
+
+        sql_upd = """
+        INSERT INTO kalender_t (datum, jahr, monat, tag, wtag, kw)
+        SELECT
+            tk.datum,
+            tk.jahr,
+            tk.monat,
+            tk.tag,
+            tk.wtag,
+            tk.kw
+
+        FROM temp_kalender_t as tk
+
+        LEFT JOIN kalender_t as k
+            ON	tk.datum = k.datum
+            
+        WHERE k.datum IS NULL
+        """
+        conn.execute(text(sql_upd))
 
 class KassenjournalStatus():
     '''Holt Informationen zu den gespeicherten Kassenjournaldaten'''
