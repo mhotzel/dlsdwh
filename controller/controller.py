@@ -14,6 +14,10 @@ class Controller(Protocol):
         '''Zeigt den Auswertungen-Frame an.'''
         ...
 
+    def selektiere_datenbank(self) -> None:
+        '''Startet die Auswahl der Datenbank.'''
+        ...
+
     def log_message(self, level: LogLevel, message: str) -> None:
         '''Loggt die uebergebene Nachricht.'''
 

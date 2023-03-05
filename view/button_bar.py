@@ -21,6 +21,10 @@ class ButtonBar(Frame):
         self.btn_auswertungen = Button(self, text='Auswertungen')
         self.btn_auswertungen.pack(fill='x', padx=5, pady=5)
 
+        self.btn_datenbank_selektieren = Button(self, text='Datenbank wählen')
+        self.btn_datenbank_selektieren.pack(
+            fill='x', padx=5, pady=5, side='bottom')
+
     def _register_bindings(self):
         '''Registriert Listener usw'''
         self.btn_importseite.configure(
@@ -28,3 +32,6 @@ class ButtonBar(Frame):
 
         self.btn_auswertungen.configure(
             command=self.controller.zeige_auswertungen_frame)
+
+        self.btn_datenbank_selektieren.configure(
+            command=self.controller.selektiere_datenbank)

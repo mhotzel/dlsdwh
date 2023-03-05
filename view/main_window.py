@@ -2,14 +2,14 @@ from configparser import ConfigParser
 from datetime import datetime
 from pathlib import Path
 from tkinter import StringVar
-from tkinter.messagebox import showerror
+from tkinter.messagebox import showerror, showinfo
 from typing import Mapping
 
 from ttkbootstrap import Label, Separator, Window
 
 from model.db_manager import DbManager
 from model.log_level import LogLevel
-from settings import IMGDIR, LOG_FILE
+from settings import IMGDIR, LOG_FILE, select_database
 from view.auswertungen_frm import AuswertungenFrame
 from view.button_bar import ButtonBar
 from view.import_frm import ImportFrame
@@ -31,6 +31,7 @@ class MainWindow(Window):
 
         self._build_ui()
         self._register_bindings()
+        self.log_message(LogLevel.INFO, f"Datenbank: {cfg['dbfile']}")
 
     def _build_ui(self) -> None:
         '''Baut die Oberflaeche'''
@@ -94,3 +95,11 @@ class MainWindow(Window):
     def zeige_auswertungen_frame(self) -> None:
         '''Zeigt den Auswertungen-Frame an.'''
         self._frames[AuswertungenFrame].show()
+
+    def selektiere_datenbank(self) -> None:
+        '''Startet die Auswahl der Datenbank.'''
+        dbfile = select_database()
+        if dbfile:
+            showinfo('Neustart erforderlich',
+                     'Das Programm wird nun beenden. Bitte die Anwendung nun neu starten, um die Änderung wirksam werden zu lassen.')
+            self._on_closing()

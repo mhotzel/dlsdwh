@@ -3,7 +3,7 @@ import locale
 import os
 from pathlib import Path
 from tkinter.filedialog import asksaveasfilename
-from typing import Mapping
+from typing import Mapping, Tuple
 from model.db_manager import DbManager
 
 BASEDIR = str(Path(__file__).parent)
@@ -49,15 +49,16 @@ def check_configfile() -> None:
     cfg_parser = ConfigParser()
     cfg_parser.read(CONFIG_FILE)
 
-    if not 'datenbank' in cfg_parser.sections():
-        cfg_parser.add_section('datenbank')
+    if 'datenbank' in cfg_parser.sections():
+        return
 
+    cfg_parser.add_section('datenbank')
     with open(CONFIG_FILE, mode='w') as cfgfile:
         cfg_parser.write(cfgfile)
 
 
 def get_dbconfig() -> str:
-    '''Prüft die Konfigurationseinstellungen und legt bei Bedarf die Datenbank an bzw. lässt den User die Datenbank auswählen'''
+    '''Liefert die Datenbankkonfiguration - aktuell als Dateiname der SQLITE-Datenbank'''
 
     cfg_parser = ConfigParser()
     cfg_parser.read(CONFIG_FILE)
@@ -65,13 +66,25 @@ def get_dbconfig() -> str:
     if 'dbfile' in cfg_parser['datenbank']:
         return cfg_parser['datenbank']['dbfile']
 
-    filename = asksaveasfilename(title='bestehende Datenbank auswählen oder einen neuen Dateinamen eingeben', defaultextension='Sqlite Datenbank (*.db)', filetypes=[(
-        'Sqlite Datenbank', '*.db'), ('Sqlite Datenbank', '*.sqlite')], confirmoverwrite=False)
+    return None
 
-    if not filename:
-        return None
 
-    cfg_parser['datenbank']['dbfile'] = str(Path(filename).absolute())
+def select_database() -> str:
+    '''Ruft den Dialog zur Auswahl einer SQLITE-Datenbank auf'''
+
+    cfg_parser = ConfigParser()
+    cfg_parser.read(CONFIG_FILE)
+
+    filename = asksaveasfilename(
+        title='bestehende Datenbank auswählen oder einen neuen Dateinamen eingeben',
+        defaultextension='Sqlite Datenbank (*.db)',
+        filetypes=[('Sqlite Datenbank', '*.db'),
+                   ('Sqlite Datenbank', '*.sqlite')],
+        confirmoverwrite=False)
+
+    if filename:
+        filename = str(Path(filename).resolve())
+        cfg_parser['datenbank']['dbfile'] = str(Path(filename).resolve())
 
     with open(CONFIG_FILE, mode='w') as cfgfile:
         cfg_parser.write(cfgfile)
