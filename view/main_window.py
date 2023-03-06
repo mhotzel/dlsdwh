@@ -13,6 +13,7 @@ from settings import IMGDIR, LOG_FILE, select_database
 from view.auswertungen_frm import AuswertungenFrame
 from view.button_bar import ButtonBar
 from view.import_frm import ImportFrame
+from view.import_dlslisten_frm import ImportDlsListenFrame
 from view.start_frm import StartFrame
 
 
@@ -55,6 +56,7 @@ class MainWindow(Window):
         self._frames = {
             StartFrame: StartFrame(self),
             ImportFrame: ImportFrame(self, application=self, db_man=self.db_manager),
+            ImportDlsListenFrame: ImportDlsListenFrame(self, application=self, db_man=self.db_manager),
             AuswertungenFrame: AuswertungenFrame(self, application=self)
         }
 
@@ -91,6 +93,10 @@ class MainWindow(Window):
     def zeige_import_frame(self) -> None:
         '''Zeigt den Import-Frame an.'''
         self._frames[ImportFrame].show()
+
+    def zeige_importdlslisten_frame(self) -> None:
+        '''Zeigt den Import-Frame für DLS-eigene Listen an.'''
+        self._frames[ImportDlsListenFrame].show()
 
     def zeige_auswertungen_frame(self) -> None:
         '''Zeigt den Auswertungen-Frame an.'''

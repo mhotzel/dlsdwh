@@ -10,6 +10,10 @@ class Controller(Protocol):
         '''Zeigt den Import-Frame an.'''
         ...
 
+    def zeige_importdlslisten_frame(self) -> None:
+        '''Zeigt den Import-Frame für DLS-eigene Listen an.'''
+        ...
+
     def zeige_auswertungen_frame(self) -> None:
         '''Zeigt den Auswertungen-Frame an.'''
         ...
