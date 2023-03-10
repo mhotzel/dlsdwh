@@ -27,6 +27,8 @@ class ImportFrame(Frame):
     def __init__(self, master, application: Controller, db_man: DbManager) -> None:
         super().__init__(master)
 
+        self.erste_anzeige = False
+
         self.application = application
         self.db_manager = db_man
         self.controls = set()
@@ -140,6 +142,8 @@ class ImportFrame(Frame):
     def show(self) -> None:
         '''Bringt den Frame in den Vordergrund'''
         self.tkraise()
+        if self.erste_anzeige:
+            return
         self.update_letzter_import_kj()
         self.update_letzter_import_wgr()
         self.update_letzter_import_kdn()
@@ -149,6 +153,8 @@ class ImportFrame(Frame):
         self.update_letzter_import_mean()
         self.update_letzter_import_scs_liefart()
         self.update_letzter_import_presseartikel()
+        
+        self.erste_anzeige = True
 
     def log_message(self, msg: str) -> None:
         '''Fuegt dem Nachrichten einen neuen Eintrag hinzu'''
