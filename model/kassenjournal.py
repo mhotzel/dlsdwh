@@ -31,12 +31,12 @@ class KassenjournalImporter():
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
 
-        self.tab_kj: Table = self.db_manager.tables['tab_kassenjournal']
-        self.tab_kjt: Table = self.db_manager.tables['tab_kassenjournal_temp']
-        self.tab_bons: Table = self.db_manager.tables['tab_kassenbons']
-        self.tab_bons_temp: Table = self.db_manager.tables['tab_kassenbons_temp']
-        self.tab_bon_pos: Table = self.db_manager.tables['tab_bon_pos']
-        self.tab_bon_pos_temp: Table = self.db_manager.tables['tab_bon_pos_temp']
+        self.tab_kj: Table = self.db_manager.meta_data.tables['kassenjournal_t']
+        self.tab_kjt: Table = self.db_manager.meta_data.tables['temp_kassenjournal_t']
+        self.tab_bons: Table = self.db_manager.meta_data.tables['kassenbons_t']
+        self.tab_bons_temp: Table = self.db_manager.meta_data.tables['temp_kassenbons_t']
+        self.tab_bon_pos: Table = self.db_manager.meta_data.tables['kassenbons_pos_t']
+        self.tab_bon_pos_temp: Table = self.db_manager.meta_data.tables['temp_kassenbons_pos_t']
 
         conn = self.db_manager.get_engine().connect()
         with conn:

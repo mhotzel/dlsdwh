@@ -22,7 +22,7 @@ class PfandImporter():
         Schreibt die gelesenen Daten in die Datenbank.
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
-        self.tab_temp: Table = self.db_manager.tables['tab_pfand_temp']
+        self.tab_temp: Table = self.db_manager.meta_data.tables['temp_pfand_t']
 
         conn = self.db_manager.get_engine().connect()
         with conn:

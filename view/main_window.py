@@ -49,7 +49,7 @@ class MainWindow(Window):
         self.statusbar_sep.grid(row=1, column=0, columnspan=3, sticky='WE')
         self.status_bar_text = StringVar()
         self.status_bar = Label(
-            self, textvariable=self.status_bar_text)
+            self, textvariable=self.status_bar_text, width=100)
         self.status_bar.grid(row=2, column=0, columnspan=3,
                              ipadx=5, ipady=5, sticky='WE')
 

@@ -40,7 +40,7 @@ class DbManager():
         'liefert die Metadaten zur Datenbank. Lazy-Init.'
         if not self.meta_data:
             self.meta_data = MetaData()
-            self.tables['tab_kassenjournal'] = Table(
+            Table(
                 'kassenjournal_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -67,7 +67,7 @@ class DbManager():
                 Column('storno_ref', BigInteger()),
                 Column('tse_info', String(255))
             )
-            self.tables['tab_kassenjournal_temp'] = Table(
+            Table(
                 'temp_kassenjournal_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -94,7 +94,7 @@ class DbManager():
                 Column('storno_ref', BigInteger()),
                 Column('tse_info', String(255))
             )
-            self.tables['tab_kassenbons'] = Table(
+            Table(
                 'kassenbons_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -109,7 +109,7 @@ class DbManager():
                 Column('tse_info', String(255)),
                 Column('storno_ref', Integer())
             )
-            self.tables['tab_kassenbons_temp'] = Table(
+            Table(
                 'temp_kassenbons_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -124,7 +124,7 @@ class DbManager():
                 Column('tse_info', String(255)),
                 Column('storno_ref', Integer())
             )
-            self.tables['tab_bon_pos_temp'] = Table(
+            Table(
                 'temp_kassenbons_pos_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('hash_bon', String(40)),
@@ -145,7 +145,7 @@ class DbManager():
                 Column('wgr_bez', String(50)),
                 Column('ma_id', Integer())
             )
-            self.tables['tab_bon_pos'] = Table(
+            Table(
                 'kassenbons_pos_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('hash_bon', String(40), index=True),
@@ -166,7 +166,7 @@ class DbManager():
                 Column('wgr_bez', String(50)),
                 Column('ma_id', Integer())
             )
-            self.tables['tab_kalender'] = Table(
+            Table(
                 'kalender_t', self.meta_data,
                 Column('datum', Date, primary_key=True),
                 Column('jahr', Integer()),
@@ -175,7 +175,7 @@ class DbManager():
                 Column('wtag', Integer()),
                 Column('kw', Integer())
             )
-            self.tables['tab_temp_kalender'] = Table(
+            Table(
                 'temp_kalender_t', self.meta_data,
                 Column('datum', Date(), primary_key=True),
                 Column('jahr', Integer()),
@@ -184,20 +184,23 @@ class DbManager():
                 Column('wtag', Integer()),
                 Column('kw', Integer())
             )
-            self.tables['tab_hub_warengruppen'] = Table(
+            Table(
                 'hub_warengruppen_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
-                Column('eintrag_ts', TIMESTAMP()),
+                Column('eintrag_ats', TIMESTAMP()),
+                Column('gueltig_adtm', Date()),
                 Column('zuletzt_gesehen', TIMESTAMP()),
                 Column('quelle', String(255)),
                 Column('wgr', String(40), index=True)
             )
-            self.tables['tab_sat_warengruppen'] = Table(
+            Table(
                 'sat_warengruppen_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
-                Column('eintrag_ts', TIMESTAMP()),
-                Column('gueltig_bis', TIMESTAMP()),
+                Column('eintrag_ats', TIMESTAMP()),
+                Column('eintrag_ets', TIMESTAMP()),
+                Column('gueltig_adtm', Date()),
+                Column('gueltig_edtm', Date()),
                 Column('gueltig', Boolean(create_constraint=True)),
                 Column('quelle', String(255)),
                 Column('wgr_bez', String(255)),
@@ -206,12 +209,13 @@ class DbManager():
                 Column('rabatt_kz', String(1)),
                 Column('fsk_kz', String(12))
             )
-            self.tables['tab_warengruppen_temp'] = Table(
+            Table(
                 'temp_warengruppen_t', self.meta_data,
                 Column('quelle', String(255)),
+                Column('eintrag_ts', TIMESTAMP()),
+                Column('export_datum', Date()),
                 Column('hash', String(40), primary_key=True),
                 Column('hash_diff', String(40)),
-                Column('eintrag_ts', TIMESTAMP()),
                 Column('wgr', String(40)),
                 Column('wgr_bez', String(255)),
                 Column('mwst_kz', String(2)),
@@ -219,7 +223,7 @@ class DbManager():
                 Column('rabatt_kz', String(1)),
                 Column('fsk_kz', String(12))
             )
-            self.tables['tab_kunden_temp'] = Table(
+            Table(
                 'temp_kunden_t', self.meta_data,
                 Column('quelle', String(255)),
                 Column('hash', String(40), primary_key=True),
@@ -229,7 +233,7 @@ class DbManager():
                 Column('kd_name', String(255)),
                 Column('rabatt_satz', Numeric(5, 2))
             )
-            self.tables['tab_hub_kunden'] = Table(
+            Table(
                 'hub_kunden_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -237,7 +241,7 @@ class DbManager():
                 Column('quelle', String(255)),
                 Column('kdnr', String(255), index=True)
             )
-            self.tables['tab_sat_kunden'] = Table(
+            Table(
                 'sat_kunden_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
@@ -248,13 +252,13 @@ class DbManager():
                 Column('kd_name', String(255)),
                 Column('rabatt_satz', Numeric(5, 2))
             )
-            self.tables['tab_artikel_temp'] = Table(
+            Table(
                 'temp_artikel_t', self.meta_data,
                 Column('quelle', String(255)),
+                Column('eintrag_ts', TIMESTAMP()),
                 Column('export_datum', Date()),
                 Column('hash', String(40), primary_key=True),
                 Column('hash_diff', String(40)),
-                Column('eintrag_ts', TIMESTAMP()),
                 Column('art_nr', String(40)),
                 Column('idx', Integer()),
                 Column('scs_pool_id', BigInteger()),
@@ -273,7 +277,7 @@ class DbManager():
                 Column('fsk_kz', String(1)),
                 Column('notizen', String(255))
             )
-            self.tables['tab_hub_artikel'] = Table(
+            Table(
                 'hub_artikel_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ats', TIMESTAMP()),
@@ -282,7 +286,7 @@ class DbManager():
                 Column('quelle', String(255)),
                 Column('art_nr', String(255), index=True)
             )
-            self.tables['tab_sat_artikel'] = Table(
+            Table(
                 'sat_artikel_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
@@ -309,7 +313,7 @@ class DbManager():
                 Column('fsk_kz', String(1)),
                 Column('notizen', String(255))
             )
-            self.tables['tab_pfand_temp'] = Table(
+            Table(
                 'temp_pfand_t', self.meta_data,
                 Column('quelle', String(255)),
                 Column('hash', String(40), primary_key=True),
@@ -322,7 +326,7 @@ class DbManager():
                 Column('wgr', String(40)),
                 Column('wgr_bez', String(255))
             )
-            self.tables['tab_hub_pfand'] = Table(
+            Table(
                 'hub_pfand_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -330,7 +334,7 @@ class DbManager():
                 Column('quelle', String(255)),
                 Column('art_nr', String(255), index=True)
             )
-            self.tables['tab_sat_pfand'] = Table(
+            Table(
                 'sat_pfand_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
@@ -344,7 +348,7 @@ class DbManager():
                 Column('wgr', String(40)),
                 Column('wgr_bez', String(255))
             )
-            self.tables['tab_lieferanten_temp'] = Table(
+            Table(
                 'temp_lieferanten_t', self.meta_data,
                 Column('quelle', String(255)),
                 Column('hash', String(40), primary_key=True),
@@ -357,7 +361,7 @@ class DbManager():
                 Column('ist_hauptlief', String(12)),
                 Column('art_import_logik', String(12))
             )
-            self.tables['tab_hub_lieferanten'] = Table(
+            Table(
                 'hub_lieferanten_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -365,7 +369,7 @@ class DbManager():
                 Column('quelle', String(255)),
                 Column('lief_nr', String(40), index=True)
             )
-            self.tables['tab_sat_lieferanten'] = Table(
+            Table(
                 'sat_lieferanten_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
@@ -379,7 +383,7 @@ class DbManager():
                 Column('ist_hauptlief', String(12)),
                 Column('art_import_logik', String(12))
             )
-            self.tables['tab_mean_temp'] = Table(
+            Table(
                 'temp_mean_t', self.meta_data,
                 Column('quelle', String(255)),
                 Column('hash', String(40), primary_key=True),
@@ -388,7 +392,7 @@ class DbManager():
                 Column('ean_m', String(40)),
                 Column('ean_h', String(40))
             )
-            self.tables['tab_hub_mean'] = Table(
+            Table(
                 'hub_mean_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -396,7 +400,7 @@ class DbManager():
                 Column('quelle', String(255)),
                 Column('ean_m', String(40), index=True),
             )
-            self.tables['tab_sat_mean'] = Table(
+            Table(
                 'sat_mean_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
@@ -406,7 +410,7 @@ class DbManager():
                 Column('quelle', String(255)),
                 Column('ean_h', String(40))
             )
-            self.tables['tab_scs_liefart_temp'] = Table(
+            Table(
                 'temp_scs_liefart_t', self.meta_data,
                 Column('quelle', String(255)),
                 Column('hash', String(40), primary_key=True),
@@ -417,7 +421,7 @@ class DbManager():
                 Column('lief_art_nr', String(40)),
                 Column('ek_netto', Numeric(18, 3))
             )
-            self.tables['tab_scs_hub_liefart'] = Table(
+            Table(
                 'hub_scs_liefart_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -426,7 +430,7 @@ class DbManager():
                 Column('ean', String(40), index=True),
                 Column('lief_nr', String(40), index=True),
             )
-            self.tables['tab_scs_sat_liefart'] = Table(
+            Table(
                 'sat_scs_liefart_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),

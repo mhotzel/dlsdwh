@@ -17,13 +17,14 @@ class WarengruppenImporter():
         self.df: pd.DataFrame = None
         self.tab_temp: Table = None
         self.export_date: date = export_date
+        self.ts = datetime.now()
 
     def write_data(self) -> None:
         '''
         Schreibt die gelesenen Daten in die Datenbank.
         Wichtig. Zuerst muessen sie mit 'load_file' geladen werden.
         '''
-        self.tab_temp: Table = self.db_manager.tables['tab_warengruppen_temp']
+        self.tab_temp: Table = self.db_manager.meta_data.tables['temp_warengruppen_t']
 
         conn = self.db_manager.get_engine().connect()
         with conn:
@@ -39,7 +40,6 @@ class WarengruppenImporter():
         Startet den Import der Warengruppen in die Zwischentabelle. Nach der Beladung der Zwischentabelle
         muss dann die Uebertragung in die Zieltabelle(n) mittels ::update_table gestartet werden.
         '''
-        ts = datetime.now()
 
         df_wgr = pd.read_csv(
             self.import_file, sep=';', decimal=',', encoding='cp1252',
@@ -57,7 +57,8 @@ class WarengruppenImporter():
 
         df_wgr['wgr'] = df_wgr.wgr.astype(str).str.cat(
             df_wgr.uwgr.astype(str), sep=':')
-        df_wgr['eintrag_ts'] = pd.to_datetime(ts)
+        df_wgr['eintrag_ts'] = pd.to_datetime(self.ts)
+        df_wgr['export_datum'] = pd.to_datetime(self.export_date)
         df_wgr = df_wgr.drop(columns=['uwgr'])
 
         def mwst(val) -> float:
@@ -95,10 +96,11 @@ class WarengruppenImporter():
         '''belaedt erstmal den HUB'''
 
         sql = '''
-        INSERT INTO hub_warengruppen_t (hash, eintrag_ts, quelle, wgr)
+        INSERT INTO hub_warengruppen_t (hash, eintrag_ats, gueltig_adtm, quelle, wgr)
         SELECT 
             wt.hash,
-            wt.eintrag_ts,
+            wt.eintrag_ts AS eintrag_ats,
+            wt.export_datum AS gueltig_adtm,
             wt.quelle,
             wt.wgr
             
@@ -121,7 +123,8 @@ class WarengruppenImporter():
         sql = '''
         UPDATE sat_warengruppen_t
         SET 
-            gueltig_bis = datetime('now', 'localtime'),
+            eintrag_ets = :eintrag_ets,
+            gueltig_edtm = :gueltig_edtm,
             gueltig = 0
 
         WHERE hash IN (
@@ -137,7 +140,7 @@ class WarengruppenImporter():
             AND 	wt.hash_diff <> ws.hash_diff
         )
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'eintrag_ets': self.ts, 'gueltig_edtm': self.export_date})
 
     def _fuege_neue_sat_ein(self, conn: Connection) -> None:
         '''
@@ -145,12 +148,14 @@ class WarengruppenImporter():
         Daten vorhanden sind.
         '''
         sql = '''
-        INSERT INTO sat_warengruppen_t (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, wgr_bez, mwst_kz, mwst_satz, rabatt_kz, fsk_kz)
+        INSERT INTO sat_warengruppen_t (hash, hash_diff, eintrag_ats, eintrag_ets, gueltig_adtm, gueltig_edtm, gueltig, quelle, wgr_bez, mwst_kz, mwst_satz, rabatt_kz, fsk_kz)
         SELECT 
             wt.hash,
             wt.hash_diff,
-            wt.eintrag_ts,
-            datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
+            wt.eintrag_ts AS eintrag_ats,
+            datetime('2099-12-31 23:59:59.000000') AS eintrag_ets,
+            :gueltig_adtm AS gueltig_adtm,
+            date('2099-12-31') AS gueltig_edtm,
             1 as gueltig,
             wt.quelle,
             wt.wgr_bez,
@@ -167,16 +172,16 @@ class WarengruppenImporter():
 
         WHERE ws.hash IS NULL
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_adtm': self.export_date})
 
     def _update_zuletzt_gesehen(self, conn: Connection) -> None:
         '''Setzt das 'zuletzt_gesehen'-Datum im HUB'''
         sql = '''
         UPDATE hub_warengruppen_t
-        SET zuletzt_gesehen = bas.eintrag_ts
+        SET zuletzt_gesehen = bas.export_datum
         FROM (
             SELECT
-                wt.eintrag_ts,
+                wt.export_datum,
                 wt.hash
 
             FROM temp_warengruppen_t AS wt
