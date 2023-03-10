@@ -96,7 +96,7 @@ class ArtikelImporter():
         INSERT INTO hub_artikel_t (hash, eintrag_ats, gueltig_adtm, zuletzt_gesehen, quelle, art_nr)
         SELECT
             t.hash,
-            t.eintrag_ts,
+            t.eintrag_ts AS eintrag_ats,
             t.export_datum AS gueltig_adtm,
             t.export_datum AS zuletzt_gesehen,
             t.quelle,
@@ -152,7 +152,7 @@ class ArtikelImporter():
             t.hash,
             t.hash_diff,
             t.eintrag_ts AS eintrag_ats,
-            datetime('2099-12-31 23:59:59.000000') AS eintrag_ets,
+            datetime('2099-12-31 23:59:59.999999') AS eintrag_ets,
             :gueltig_adtm AS gueltig_adtm,
             date('2099-12-31') AS gueltig_edtm,
             1 as gueltig,
@@ -211,9 +211,9 @@ class ArtikelStatus():
         self.db_manager = db_manager
 
     @property
-    def letzte_aenderung(self) -> date:
+    def letzte_datei(self) -> date:
         '''
-        Ermittelt den letzten Import in der Datenbank.
+        Ermittelt das Datum der Datei mit dem jüngsten Import in der Datenbank.
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
         '''
         SQL = """

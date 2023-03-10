@@ -16,6 +16,7 @@ class SCSLieferantenArtikelImporter():
         self.df: pd.DataFrame = None
         self.tab_temp: Table = None
         self.export_date: date = export_date
+        self.ts = datetime.now()
 
     def write_data(self) -> None:
         '''
@@ -38,8 +39,6 @@ class SCSLieferantenArtikelImporter():
         Startet den Import der Daten in die Zwischentabelle. Nach der Beladung der Zwischentabelle
         muss dann die Uebertragung in die Zieltabelle(n) mittels ::update_table gestartet werden.
         '''
-        ts = datetime.now()
-
         df = pd.read_csv(
             self.import_file, encoding='cp1252', sep=';', decimal=',',
             usecols=['LiefArtNr', 'EAN', 'LiefNr', 'EKPreis'],
@@ -48,7 +47,8 @@ class SCSLieferantenArtikelImporter():
 
         df['hash'] = concat(df[['ean', 'lief_nr']]).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
         df['hash_diff'] = concat(df[['lief_art_nr', 'ek_netto']]).apply(lambda s: md5(s.encode('utf-8')).hexdigest() )
-        df['eintrag_ts'] = pd.to_datetime(ts)
+        df['eintrag_ts'] = pd.to_datetime(self.ts)
+        df['export_datum'] = pd.to_datetime(self.export_date)
         df['quelle'] = 'scs_export_lieferantenartikel'
 
         self.df = df
@@ -69,11 +69,12 @@ class SCSLieferantenArtikelImporter():
         '''belaedt erstmal den HUB'''
 
         sql = '''
-        INSERT INTO hub_scs_liefart_t (hash, eintrag_ts, zuletzt_gesehen, quelle, ean, lief_nr)
+        INSERT INTO hub_scs_liefart_t (hash, eintrag_ats, gueltig_adtm, zuletzt_gesehen, quelle, ean, lief_nr)
         SELECT
             t.hash,
-            t.eintrag_ts,
-            t.eintrag_ts AS zuletzt_gesehen,
+            t.eintrag_ts AS eintrag_ats,
+            t.export_datum AS gueltig_adtm,
+            t.export_datum AS zuletzt_gesehen,
             t.quelle,
             t.ean,
             t.lief_nr
@@ -97,7 +98,8 @@ class SCSLieferantenArtikelImporter():
         sql = '''
         UPDATE sat_scs_liefart_t
         SET 
-            gueltig_bis = datetime('now', 'localtime'),
+            eintrag_ets = :gueltig_ets,
+            gueltig_edtm = :gueltig_edtm,
             gueltig = 0
 
         WHERE hash IN (
@@ -113,7 +115,7 @@ class SCSLieferantenArtikelImporter():
             AND 	t.hash_diff <> s.hash_diff
         )
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_ets': self.ts, 'gueltig_edtm': self.export_date})
 
     def _fuege_neue_sat_ein(self, conn: Connection) -> None:
         '''
@@ -122,12 +124,14 @@ class SCSLieferantenArtikelImporter():
         '''
         sql = '''
         INSERT INTO sat_scs_liefart_t 
-        (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, lief_art_nr, ek_netto)
+        (hash, hash_diff, eintrag_ats, eintrag_ets, gueltig_adtm, gueltig_edtm, gueltig, quelle, lief_art_nr, ek_netto)
         SELECT 
             t.hash,
             t.hash_diff,
-            t.eintrag_ts,
-            datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
+            t.eintrag_ts AS eintrag_ats,
+            datetime('2099-12-31 23:59:59.999999') AS eintrag_ets,
+            :gueltig_adtm AS gueltig_adtm,
+            date('2099-12-31') AS gueltig_edtm,
             1 as gueltig,
             t.quelle,
             t.lief_art_nr,
@@ -141,16 +145,16 @@ class SCSLieferantenArtikelImporter():
 
         WHERE s.hash IS NULL
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_adtm': self.export_date})
 
     def _update_zuletzt_gesehen(self, conn: Connection) -> None:
         '''Setzt das 'zuletzt_gesehen'-Datum im HUB'''
         sql = '''
         UPDATE hub_scs_liefart_t
-        SET zuletzt_gesehen = bas.eintrag_ts
+        SET zuletzt_gesehen = bas.export_datum
         FROM (
             SELECT
-                t.eintrag_ts,
+                t.export_datum,
                 t.hash
 
             FROM temp_scs_liefart_t AS t
@@ -170,9 +174,9 @@ class SCSLieferantenArtikelStatus():
         self.db_manager = db_manager
 
     @property
-    def letzte_aenderung(self) -> datetime:
+    def letzte_datei(self) -> datetime:
         '''
-        Ermittelt den letzten Import in der Datenbank.
+        Ermittelt das Datum der Datei mit dem jüngsten Import in der Datenbank.
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
         '''
         SQL = """

@@ -74,7 +74,7 @@ class PresseArtikelImporter():
         Dabei wird das eingelesene Presseartikel-DataFrame passend transformiert.
         '''
         df_artikel = df[['art_nr', 'art_bez', 'vk_brutto',
-                         'mwst_kz', 'fsk_kz', 'eintrag_ts', 'quelle']].copy()
+                         'mwst_kz', 'fsk_kz', 'eintrag_ts', 'quelle', 'export_datum']].copy()
         df_artikel['idx'] = 0
         df_artikel['scs_pool_id'] = df_artikel['art_nr'].astype(np.int64)
         df_artikel['mengenfaktor'] = 1
@@ -103,7 +103,7 @@ class PresseArtikelImporter():
         Laedt die Presseartikel als SCS-Artikel.
         Dabei wird das eingelesene Presseartikel-DataFrame passend transformiert.
         '''
-        df_liefart = df[['art_nr', 'ek_netto', 'eintrag_ts', 'quelle']].copy()
+        df_liefart = df[['art_nr', 'ek_netto', 'eintrag_ts', 'quelle', 'export_datum']].copy()
         df_liefart['lief_nr'] = '34'
         df_liefart['lief_art_nr'] = df_liefart['art_nr']
         df_liefart = df_liefart.rename(columns={'art_nr': 'ean'})
@@ -272,11 +272,12 @@ class PresseArtikelImporter():
         '''belaedt erstmal den HUB'''
 
         sql = '''
-        INSERT INTO hub_scs_liefart_t (hash, eintrag_ts, zuletzt_gesehen, quelle, ean, lief_nr)
+        INSERT INTO hub_scs_liefart_t (hash, eintrag_ats, gueltig_adtm, zuletzt_gesehen, quelle, ean, lief_nr)
         SELECT
             t.hash,
             t.eintrag_ts,
             t.eintrag_ts AS zuletzt_gesehen,
+            t.export_datum AS zuletzt_gesehen,
             t.quelle,
             t.ean,
             t.lief_nr
@@ -300,7 +301,8 @@ class PresseArtikelImporter():
         sql = '''
         UPDATE sat_scs_liefart_t
         SET 
-            gueltig_bis = datetime('now', 'localtime'),
+            eintrag_ets = :gueltig_ets,
+            gueltig_edtm = :gueltig_edtm,
             gueltig = 0
 
         WHERE hash IN (
@@ -316,7 +318,7 @@ class PresseArtikelImporter():
             AND 	t.hash_diff <> s.hash_diff
         )
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_ets': self.ts, 'gueltig_edtm': self.export_date})
 
     def _liefart_fuege_neue_sat_ein(self, conn: Connection) -> None:
         '''
@@ -325,12 +327,14 @@ class PresseArtikelImporter():
         '''
         sql = '''
         INSERT INTO sat_scs_liefart_t 
-        (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, lief_art_nr, ek_netto)
+        (hash, hash_diff, eintrag_ats, eintrag_ets, gueltig_adtm, gueltig_edtm, gueltig, quelle, lief_art_nr, ek_netto)
         SELECT 
             t.hash,
             t.hash_diff,
-            t.eintrag_ts,
-            datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
+            t.eintrag_ts AS eintrag_ats,
+            datetime('2099-12-31 23:59:59.999999') AS eintrag_ets,
+            :gueltig_adtm AS gueltig_adtm,
+            date('2099-12-31') AS gueltig_edtm,
             1 as gueltig,
             t.quelle,
             t.lief_art_nr,
@@ -344,16 +348,16 @@ class PresseArtikelImporter():
 
         WHERE s.hash IS NULL
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_adtm': self.export_date})
 
     def _liefart_update_zuletzt_gesehen(self, conn: Connection) -> None:
         '''Setzt das 'zuletzt_gesehen'-Datum im HUB'''
         sql = '''
         UPDATE hub_scs_liefart_t
-        SET zuletzt_gesehen = bas.eintrag_ts
+        SET zuletzt_gesehen = bas.export_datum
         FROM (
             SELECT
-                t.eintrag_ts,
+                t.export_datum,
                 t.hash
 
             FROM temp_scs_liefart_t AS t
@@ -373,9 +377,9 @@ class PresseArtikelStatus():
         self.db_manager = db_manager
 
     @property
-    def letzte_aenderung(self) -> datetime:
+    def letzte_datei(self) -> datetime:
         '''
-        Ermittelt den letzten Import in der Datenbank.
+        Ermittelt das Datum der Datei mit dem jüngsten Import in der Datenbank.
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
         '''
         SQL = """

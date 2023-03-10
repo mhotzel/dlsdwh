@@ -40,24 +40,34 @@ class ImportFrame(Frame):
         self._frm_import = LabelFrame(self, text='Importfunktionen')
         self._frm_import.pack(fill='both', expand=True)
 
-        self.lbl_headline = Label(
+        self.lbl_impfile_from = Label(
+            self._frm_import, text='Letzte Importdatei vom:', bootstyle='primary')
+        self.lbl_impfile_from.grid(row=0, column=1, sticky='WE', padx=5, pady=5)
+
+        self.lbl_last_imp = Label(
             self._frm_import, text='Letzter Import:', bootstyle='primary')
-        self.lbl_headline.grid(row=0, column=1, sticky='WE', padx=5, pady=5)
+        self.lbl_last_imp.grid(row=0, column=2, sticky='WE', padx=5, pady=5)
 
         self.btn_imp_kassenjournal = Button(
             self._frm_import, text='Kassenjournal importieren', bootstyle='secondary', command=self.import_kassenjournal)
         self.btn_imp_kassenjournal.grid(
             row=1, column=0, sticky='WE', padx=5, pady=5)
 
+        self.var_letzte_datei_kassenjournal = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_kassenjournal = Entry(
+            self._frm_import, state='readonly', width='20', textvariable=self.var_letzte_datei_kassenjournal)
+        self.fld_letzte_datei_kassenjournal.grid(
+            row=1, column=1, sticky='WE', padx=5, pady=5)
+
         self.letzter_imp_kassenjournal = StringVar(self._frm_import)
         self.fld_letzter_imp_kassenjournal = Entry(
             self._frm_import, state='readonly', width='20', textvariable=self.letzter_imp_kassenjournal)
         self.fld_letzter_imp_kassenjournal.grid(
-            row=1, column=1, sticky='WE', padx=5, pady=5)
+            row=1, column=2, sticky='WE', padx=5, pady=5)
 
         self.btn_kj_infos = Button(
             self._frm_import, text='Status-Infos Kassenjournal ermitteln', bootstyle='secondary', command=self.schreibe_kj_status)
-        self.btn_kj_infos.grid(row=1, column=2, sticky='WE', padx=5, pady=5)
+        self.btn_kj_infos.grid(row=1, column=3, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_imp_kassenjournal)
 
         self.btn_import_warengruppen = Button(self._frm_import, text='Warengruppen importieren', bootstyle='secondary', command=self.import_warengruppen)
@@ -68,6 +78,10 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_warengruppen = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_warengruppen)
         self.fld_letzter_imp_warengruppen.grid(row=2, column=1, sticky='WE', padx=5, pady=5)
 
+        self.var_letzte_datei_warengruppen = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_warengruppen = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_warengruppen)
+        self.fld_letzte_datei_warengruppen.grid(row=2, column=2, sticky='WE', padx=5, pady=5)
+
         self.btn_import_kundendaten = Button(self._frm_import, text='Kundendaten importieren', bootstyle='secondary', command=self.import_kundendaten)
         self.btn_import_kundendaten.grid(row=3, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_kundendaten)
@@ -75,6 +89,10 @@ class ImportFrame(Frame):
         self.letzter_imp_kundendaten = StringVar(self._frm_import)
         self.fld_letzter_imp_kundendaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_kundendaten)
         self.fld_letzter_imp_kundendaten.grid(row=3, column=1, sticky='WE', padx=5, pady=5)
+
+        self.var_letzte_datei_kundendaten = StringVar(self._frm_import, 'noch nicht implementiert')
+        self.fld_letzte_datei_kundendaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_kundendaten)
+        self.fld_letzte_datei_kundendaten.grid(row=3, column=2, sticky='WE', padx=5, pady=5)
 
         self.btn_import_scsartikel = Button(
             self._frm_import, text='Schapfl-Artikelliste importieren', bootstyle='secondary', command=self.import_artikeldaten)
@@ -88,6 +106,12 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_scs_artikel.grid(
             row=20, column=1, sticky='WE', padx=5, pady=5)
         
+        self.var_letzte_datei_scs_artikel = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_scs_artikel = Entry(
+            self._frm_import, state='readonly', width='20', textvariable=self.var_letzte_datei_scs_artikel)
+        self.fld_letzte_datei_scs_artikel.grid(
+            row=20, column=2, sticky='WE', padx=5, pady=5)
+        
         self.btn_import_pfanddaten = Button(self._frm_import, text='Pfanddaten importieren', bootstyle='secondary', command=self.import_pfanddaten)
         self.btn_import_pfanddaten.grid(row=21, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_pfanddaten)
@@ -95,6 +119,10 @@ class ImportFrame(Frame):
         self.letzter_imp_pfanddaten = StringVar(self._frm_import)
         self.fld_letzter_imp_pfanddaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_pfanddaten)
         self.fld_letzter_imp_pfanddaten.grid(row=21, column=1, sticky='WE', padx=5, pady=5)
+        
+        self.var_letzte_datei_pfanddaten = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_pfanddaten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_pfanddaten)
+        self.fld_letzte_datei_pfanddaten.grid(row=21, column=2, sticky='WE', padx=5, pady=5)
 
         self.btn_import_lieferanten = Button(self._frm_import, text='Lieferanten importieren', bootstyle='secondary', command=self.import_lieferanten)
         self.btn_import_lieferanten.grid(row=22, column=0, sticky='WE', padx=5, pady=5)
@@ -104,6 +132,10 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_lieferanten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_lieferanten)
         self.fld_letzter_imp_lieferanten.grid(row=22, column=1, sticky='WE', padx=5, pady=5)
 
+        self.var_letzte_datei_lieferanten = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_lieferanten = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_lieferanten)
+        self.fld_letzte_datei_lieferanten.grid(row=22, column=2, sticky='WE', padx=5, pady=5)
+
         self.btn_import_mean = Button(self._frm_import, text='Mehrfach-EAN importieren', bootstyle='secondary', command=self.import_mean)
         self.btn_import_mean.grid(row=23, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_mean)
@@ -111,6 +143,10 @@ class ImportFrame(Frame):
         self.letzter_imp_mean = StringVar(self._frm_import)
         self.fld_letzter_imp_mean = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_mean)
         self.fld_letzter_imp_mean.grid(row=23, column=1, sticky='WE', padx=5, pady=5)
+
+        self.var_letzte_datei_mean = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_mean = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_mean)
+        self.fld_letzte_datei_mean.grid(row=23, column=2, sticky='WE', padx=5, pady=5)
 
         self.btn_import_scs_liefart = Button(self._frm_import, text='Lieferantenartikel importieren', bootstyle='secondary', command=self.import_scs_liefart)
         self.btn_import_scs_liefart.grid(row=24, column=0, sticky='WE', padx=5, pady=5)
@@ -120,6 +156,10 @@ class ImportFrame(Frame):
         self.fld_letzter_imp_scs_liefart = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_scs_liefart)
         self.fld_letzter_imp_scs_liefart.grid(row=24, column=1, sticky='WE', padx=5, pady=5)
 
+        self.var_letzte_datei_scs_liefart = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_scs_liefart = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_scs_liefart)
+        self.fld_letzte_datei_scs_liefart.grid(row=24, column=2, sticky='WE', padx=5, pady=5)
+
         self.btn_import_presseartikel = Button(self._frm_import, text='Presseartikel importieren', bootstyle='secondary', command=self.import_presseartikel)
         self.btn_import_presseartikel.grid(row=25, column=0, sticky='WE', padx=5, pady=5)
         self.controls.add(self.btn_import_presseartikel)
@@ -127,6 +167,10 @@ class ImportFrame(Frame):
         self.letzter_imp_presseartikel = StringVar(self._frm_import)
         self.fld_letzter_imp_presseartikel = Entry(self._frm_import, state='readonly', width=20, textvariable=self.letzter_imp_presseartikel)
         self.fld_letzter_imp_presseartikel.grid(row=25, column=1, sticky='WE', padx=5, pady=5)
+
+        self.var_letzte_datei_presseartikel = StringVar(self._frm_import, value='noch nicht implementiert')
+        self.fld_letzte_datei_presseartikel = Entry(self._frm_import, state='readonly', width=20, textvariable=self.var_letzte_datei_presseartikel)
+        self.fld_letzte_datei_presseartikel.grid(row=25, column=2, sticky='WE', padx=5, pady=5)
 
         # --------------------------
 
@@ -445,11 +489,11 @@ class ImportFrame(Frame):
     def update_letzter_import_wgr(self) -> None:
         '''ermittelt und setzt das Datum den letzten Imports der Warengruppen'''
 
-        letzte_aenderung = WarengruppenStatus(
-            self.application.db_manager).letzte_aenderung
-        if letzte_aenderung:
+        letzte_datei = WarengruppenStatus(
+            self.application.db_manager).letzte_datei
+        if letzte_datei:
             self.letzter_imp_warengruppen.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_datei.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_warengruppen.set('Kein Import vorhanden')
 
@@ -457,10 +501,10 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Kundendaten'''
 
         letzte_aenderung = KundenStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_kundendaten.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_kundendaten.set('Kein Import vorhanden')
 
@@ -468,7 +512,7 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Kundendaten'''
 
         letzte_aenderung = ArtikelStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_scs_artikel.set(
                 letzte_aenderung.strftime('%d.%m.%Y'))
@@ -479,10 +523,10 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Pfanddaten'''
 
         letzte_aenderung = PfandStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_pfanddaten.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_pfanddaten.set('Kein Import vorhanden')
 
@@ -490,10 +534,10 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Lieferanten'''
 
         letzte_aenderung = LieferantenStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_lieferanten.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_lieferanten.set('Kein Import vorhanden')
 
@@ -501,10 +545,10 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Mehrfach-EAN'''
 
         letzte_aenderung = MehrfachEanStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_mean.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_mean.set('Kein Import vorhanden')
 
@@ -512,10 +556,10 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Schapfl-Lieferantenartikel'''
 
         letzte_aenderung = SCSLieferantenArtikelStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_scs_liefart.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_scs_liefart.set('Kein Import vorhanden')
 
@@ -540,9 +584,9 @@ class ImportFrame(Frame):
         '''ermittelt und setzt das Datum den letzten Imports der Schapfl-Presseartikel'''
 
         letzte_aenderung = PresseArtikelStatus(
-            self.application.db_manager).letzte_aenderung
+            self.application.db_manager).letzte_datei
         if letzte_aenderung:
             self.letzter_imp_presseartikel.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_presseartikel.set('Kein Import vorhanden')

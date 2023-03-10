@@ -122,7 +122,7 @@ class KassenjournalImporter():
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabellen gestartet.'''
         conn = self.db_manager.get_engine().connect()
         with conn:
-            # self._fuelle_kassenjournal(conn)
+            self._fuelle_kassenjournal(conn)
             self._belade_bons_temp(conn)
             self._belade_bons(conn)
             self._belade_bon_pos_temp(conn)

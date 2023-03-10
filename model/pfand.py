@@ -16,6 +16,7 @@ class PfandImporter():
         self.df: pd.DataFrame = None
         self.tab_temp: Table = None
         self.export_date: date = export_date
+        self.ts = datetime.now()
 
     def write_data(self) -> None:
         '''
@@ -38,8 +39,6 @@ class PfandImporter():
         Startet den Import der Kundendaten in die Zwischentabelle. Nach der Beladung der Zwischentabelle
         muss dann die Uebertragung in die Zieltabelle(n) mittels ::update_table gestartet werden.
         '''
-        ts = datetime.now()
-
         df = pd.read_csv(
             self.import_file, encoding='cp1252', sep=';', decimal=',',
             usecols=['Bezeichnung', 'Wert', 'Hinweispflicht', 'WGR', 'UWGR', 'WGR-Bezeichnung', 'Strichcode'],
@@ -62,7 +61,8 @@ class PfandImporter():
         df['hash'] = df['art_nr'].astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
         df['quelle'] = 'scs_export_pfand'
         df['hash_diff'] = concat(df[['pfand_bez', 'pfand_brutto', 'hinweispflicht', 'wgr', 'wgr_bez']]).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
-        df['eintrag_ts'] = pd.to_datetime(ts)
+        df['eintrag_ts'] = pd.to_datetime(self.ts)
+        df['export_datum'] = pd.to_datetime(self.export_date)
         df = df[ ~df['art_nr'].isna() ].copy()
 
         self.df = df
@@ -83,11 +83,12 @@ class PfandImporter():
         '''belaedt erstmal den HUB'''
 
         sql = '''
-        INSERT INTO hub_pfand_t (hash, eintrag_ts, zuletzt_gesehen, quelle, art_nr)
+        INSERT INTO hub_pfand_t (hash, eintrag_ats, gueltig_adtm, zuletzt_gesehen, quelle, art_nr)
         SELECT
             t.hash,
-            t.eintrag_ts,
-            t.eintrag_ts AS zuletzt_gesehen,
+            t.eintrag_ts AS eintrag_ats,
+            t.export_datum AS gueltig_adtm,
+            t.export_datum AS zuletzt_gesehen,
             t.quelle,
             t.art_nr
 
@@ -110,7 +111,8 @@ class PfandImporter():
         sql = '''
         UPDATE sat_pfand_t
         SET 
-            gueltig_bis = datetime('now', 'localtime'),
+            eintrag_ets = :gueltig_ets,
+            gueltig_edtm = :gueltig_edtm,
             gueltig = 0
 
         WHERE hash IN (
@@ -126,7 +128,7 @@ class PfandImporter():
             AND 	t.hash_diff <> s.hash_diff
         )
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_ets': self.ts, 'gueltig_edtm': self.export_date})
 
     def _fuege_neue_sat_ein(self, conn: Connection) -> None:
         '''
@@ -135,12 +137,14 @@ class PfandImporter():
         '''
         sql = '''
         INSERT INTO sat_pfand_t 
-        (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, pfand_bez, pfand_brutto, hinweispflicht, wgr, wgr_bez)
+        (hash, hash_diff, eintrag_ats, eintrag_ets, gueltig_adtm, gueltig_edtm, gueltig, quelle, pfand_bez, pfand_brutto, hinweispflicht, wgr, wgr_bez)
         SELECT 
             t.hash,
             t.hash_diff,
-            t.eintrag_ts,
-            datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
+            t.eintrag_ts AS eintrag_ats,
+            datetime('2099-12-31 23:59:59.999999') AS eintrag_ets,
+            :gueltig_adtm AS gueltig_adtm,
+            date('2099-12-31') AS gueltig_edtm,
             1 as gueltig,
             t.quelle,
             t.pfand_bez,
@@ -158,16 +162,16 @@ class PfandImporter():
 
         WHERE s.hash IS NULL
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_adtm': self.export_date})
 
     def _update_zuletzt_gesehen(self, conn: Connection) -> None:
         '''Setzt das 'zuletzt_gesehen'-Datum im HUB'''
         sql = '''
         UPDATE hub_pfand_t
-        SET zuletzt_gesehen = bas.eintrag_ts
+        SET zuletzt_gesehen = bas.export_datum
         FROM (
             SELECT
-                t.eintrag_ts,
+                t.export_datum,
                 t.hash
 
             FROM temp_pfand_t AS t
@@ -187,9 +191,9 @@ class PfandStatus():
         self.db_manager = db_manager
 
     @property
-    def letzte_aenderung(self) -> datetime:
+    def letzte_datei(self) -> datetime:
         '''
-        Ermittelt den letzten Import in der Datenbank.
+        Ermittelt das Datum der Datei mit dem jüngsten Import in der Datenbank.
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt
         '''
         SQL = """
