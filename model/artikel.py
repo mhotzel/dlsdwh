@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sqlalchemy import Connection, Table, text
-from datetime import datetime
+from datetime import datetime, date
 from hashlib import md5
 
 from model.db_manager import DbManager, concat
@@ -9,12 +9,14 @@ from model.db_manager import DbManager, concat
 class ArtikelImporter():
     '''Uebernimmt den Import der Kassenartikel in die Datenbank'''
 
-    def __init__(self, db_manager: DbManager, import_file: str) -> None:
+    def __init__(self, db_manager: DbManager, import_file: str, export_date: date) -> None:
         self.db_manager = db_manager
         self.import_file = import_file
         self._listeners = set()
         self.df: pd.DataFrame = None
         self.tab_temp: Table = None
+        self.export_date: date = export_date
+        self.ts = datetime.now()
 
     def write_data(self) -> None:
         '''
@@ -37,8 +39,6 @@ class ArtikelImporter():
         Startet den Import der Kassenartikel in die Zwischentabelle. Nach der Beladung der Zwischentabelle
         muss dann die Uebertragung in die Zieltabelle(n) mittels ::update_table gestartet werden.
         '''
-        ts = datetime.now()
-
         df = pd.read_csv(
             self.import_file, encoding='cp1252', sep=';', decimal=',',
             usecols=[
@@ -68,10 +68,11 @@ class ArtikelImporter():
 
         df['hash_diff'] = concat(df[['scs_pool_id', 'idx', 'art_bez', 'mengenfaktor', 'vk_brutto', 'preiseinheit', 'kurzcode',
                     'bontext', 'mengeneinheit', 'mengentyp', 'gpfaktor', 'wgr', 'rabatt_kz', 'preisgebunden_kz',
-                    'fsk_kz', 'notizen']])
+                    'fsk_kz', 'notizen']]).astype(str).apply(lambda s: md5(s.encode('utf-8')).hexdigest())
 
         df['quelle'] = 'scs_export_artikel'
-        df['eintrag_ts'] = pd.to_datetime(ts)
+        df['eintrag_ts'] = pd.to_datetime(self.ts)
+        df['export_datum'] = pd.to_datetime(self.export_date)
         df['preiseinheit'] = np.where(df['preiseinheit'] == 0, 1, df['preiseinheit'])
 
         self.df = df
@@ -92,11 +93,12 @@ class ArtikelImporter():
         '''belaedt erstmal den HUB'''
 
         sql = '''
-        INSERT INTO hub_artikel_t (hash, eintrag_ts, zuletzt_gesehen, quelle, art_nr)
+        INSERT INTO hub_artikel_t (hash, eintrag_ats, gueltig_adtm, zuletzt_gesehen, quelle, art_nr)
         SELECT
             t.hash,
             t.eintrag_ts,
-            t.eintrag_ts AS zuletzt_gesehen,
+            t.export_datum AS gueltig_adtm,
+            t.export_datum AS zuletzt_gesehen,
             t.quelle,
             t.art_nr
 
@@ -119,7 +121,8 @@ class ArtikelImporter():
         sql = '''
         UPDATE sat_artikel_t
         SET 
-            gueltig_bis = datetime('now', 'localtime'),
+            eintrag_ets = :gueltig_ets,
+            gueltig_edtm = :gueltig_edtm,
             gueltig = 0
 
         WHERE hash IN (
@@ -135,7 +138,7 @@ class ArtikelImporter():
             AND 	t.hash_diff <> s.hash_diff
         )
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_ets': self.ts, 'gueltig_edtm': self.export_date})
 
     def _fuege_neue_sat_ein(self, conn: Connection) -> None:
         '''
@@ -144,12 +147,14 @@ class ArtikelImporter():
         '''
         sql = '''
         INSERT INTO sat_artikel_t 
-        (hash, hash_diff, eintrag_ts, gueltig_bis, gueltig, quelle, idx, scs_pool_id, art_bez, mengenfaktor, vk_brutto, preiseinheit, kurzcode, bontext, mengeneinheit, mengentyp, gpfaktor, wgr, rabatt_kz, preisgebunden_kz, fsk_kz, notizen)
+        (hash, hash_diff, eintrag_ats, eintrag_ets, gueltig_adtm, gueltig_edtm, gueltig, quelle, idx, scs_pool_id, art_bez, mengenfaktor, vk_brutto, preiseinheit, kurzcode, bontext, mengeneinheit, mengentyp, gpfaktor, wgr, rabatt_kz, preisgebunden_kz, fsk_kz, notizen)
         SELECT 
             t.hash,
             t.hash_diff,
-            t.eintrag_ts,
-            datetime('2099-12-31 23:59:59.000000') as gueltig_bis,
+            t.eintrag_ts AS eintrag_ats,
+            datetime('2099-12-31 23:59:59.000000') AS eintrag_ets,
+            :gueltig_adtm AS gueltig_adtm,
+            date('2099-12-31') AS gueltig_edtm,
             1 as gueltig,
             t.quelle,
             t.idx,
@@ -177,16 +182,16 @@ class ArtikelImporter():
 
         WHERE s.hash IS NULL
         '''
-        conn.execute(text(sql))
+        conn.execute(text(sql), {'gueltig_adtm': self.export_date})
 
     def _update_zuletzt_gesehen(self, conn: Connection) -> None:
         '''Setzt das 'zuletzt_gesehen'-Datum im HUB'''
         sql = '''
         UPDATE hub_artikel_t
-        SET zuletzt_gesehen = bas.eintrag_ts
+        SET zuletzt_gesehen = bas.export_datum
         FROM (
             SELECT
-                t.eintrag_ts,
+                t.export_datum,
                 t.hash
 
             FROM temp_artikel_t AS t
@@ -206,7 +211,7 @@ class ArtikelStatus():
         self.db_manager = db_manager
 
     @property
-    def letzte_aenderung(self) -> datetime:
+    def letzte_aenderung(self) -> date:
         '''
         Ermittelt den letzten Import in der Datenbank.
         Dazu wird das neueste 'zuletzt_gesehen'-Datum ermittelt

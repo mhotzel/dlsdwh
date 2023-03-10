@@ -251,6 +251,7 @@ class DbManager():
             self.tables['tab_artikel_temp'] = Table(
                 'temp_artikel_t', self.meta_data,
                 Column('quelle', String(255)),
+                Column('export_datum', Date()),
                 Column('hash', String(40), primary_key=True),
                 Column('hash_diff', String(40)),
                 Column('eintrag_ts', TIMESTAMP()),
@@ -275,8 +276,9 @@ class DbManager():
             self.tables['tab_hub_artikel'] = Table(
                 'hub_artikel_t', self.meta_data,
                 Column('hash', String(40), primary_key=True),
-                Column('eintrag_ts', TIMESTAMP()),
-                Column('zuletzt_gesehen', TIMESTAMP()),
+                Column('eintrag_ats', TIMESTAMP()),
+                Column('gueltig_adtm', Date()),
+                Column('zuletzt_gesehen', Date()),
                 Column('quelle', String(255)),
                 Column('art_nr', String(255), index=True)
             )
@@ -284,8 +286,10 @@ class DbManager():
                 'sat_artikel_t', self.meta_data,
                 Column('hash', String(40), index=True),
                 Column('hash_diff', String(40)),
-                Column('eintrag_ts', TIMESTAMP()),
-                Column('gueltig_bis', TIMESTAMP()),
+                Column('eintrag_ats', TIMESTAMP()),
+                Column('eintrag_ets', TIMESTAMP()),
+                Column('gueltig_adtm', Date()),
+                Column('gueltig_edtm', Date()),
                 Column('gueltig', Boolean(create_constraint=True)),
                 Column('quelle', String(255)),
                 Column('idx', Integer()),

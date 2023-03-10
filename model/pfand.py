@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sqlalchemy import Connection, Table, text
-from datetime import datetime
+from datetime import datetime, date
 from hashlib import md5
 
 from model.db_manager import DbManager, concat
@@ -9,12 +9,13 @@ from model.db_manager import DbManager, concat
 class PfandImporter():
     '''Uebernimmt den Import der Pfandwerte in die Datenbank'''
 
-    def __init__(self, db_manager: DbManager, import_file: str) -> None:
+    def __init__(self, db_manager: DbManager, import_file: str, export_date: date) -> None:
         self.db_manager = db_manager
         self.import_file = import_file
         self._listeners = set()
         self.df: pd.DataFrame = None
         self.tab_temp: Table = None
+        self.export_date: date = export_date
 
     def write_data(self) -> None:
         '''

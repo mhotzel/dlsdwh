@@ -182,6 +182,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, KassenjournalImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Kassenjournal',
                 defaultextension='SCHAPFL-Kassenjournaldatei (*.csv)',
@@ -210,6 +211,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, WarengruppenImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Warengruppen',
                 defaultextension='SCHAPFL-Warengruppendatei (*.txt)',
@@ -236,7 +238,8 @@ class ImportFrame(Frame):
         try:
             job_controller = ImportJobController(
                 self.application, self, KundenImporter, db_manager=self.db_manager)
-
+            
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Kundendaten',
                 defaultextension='SCHAPFL-Kundendatei (*.txt)',
@@ -264,6 +267,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, ArtikelImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Artikeldaten',
                 defaultextension='SCHAPFL-Artikeldatei (*.txt)',
@@ -291,6 +295,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, PfandImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Pfanddaten',
                 defaultextension='SCHAPFL-Pfanddatei (*.txt)',
@@ -318,6 +323,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, LieferantenImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Lieferanten',
                 defaultextension='SCHAPFL-Lieferantendatei (*.txt)',
@@ -345,6 +351,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, MehrfachEanImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Mehrfach-EAN',
                 defaultextension='SCHAPFL-Mehrfach-EAN-Datei (*.txt)',
@@ -372,6 +379,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, SCSLieferantenArtikelImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Lieferantenartikel',
                 defaultextension='SCHAPFL-Lieferantenartikel-Datei (*.txt)',
@@ -399,6 +407,7 @@ class ImportFrame(Frame):
             job_controller = ImportJobController(
                 self.application, self, PresseArtikelImporter, db_manager=self.db_manager)
 
+            job_controller.exportdatum_ermitteln()
             job_controller.importfile_ermitteln(
                 'Presseartikel',
                 defaultextension='SCHAPFL-Presseartikel-Datei (*.txt)',
@@ -456,7 +465,7 @@ class ImportFrame(Frame):
             self.application.db_manager).letzte_aenderung
         if letzte_aenderung:
             self.letzter_imp_scs_artikel.set(
-                letzte_aenderung.strftime('%d.%m.%Y %H:%M:%S'))
+                letzte_aenderung.strftime('%d.%m.%Y'))
         else:
             self.letzter_imp_scs_artikel.set('Kein Import vorhanden')
 

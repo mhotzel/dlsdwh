@@ -1,13 +1,14 @@
 from queue import Queue
 from threading import Thread
-from tkinter.filedialog import askopenfilenames
+from tkinter.filedialog import askopenfilename
 from typing import List, Protocol, Tuple, Type
 
 from controller.controller import Controller
 from model.db_manager import DbManager
 from model.errors import DatenImportError
-from model.kassenjournal import KassenjournalImporter
 from model.log_level import LogLevel
+from view.select_datum_frm import SelectDateWidget
+from datetime import date
 
 
 class Importer(Protocol):
@@ -43,7 +44,6 @@ class Importer(Protocol):
         '''Nach der Beladung der Zwischentabelle wird mittels dieser Methode die Beladung der Zieltabelle gestartet.'''
         ...
 
-    
 
 class JobOwner(Protocol):
     '''
@@ -58,6 +58,7 @@ class JobOwner(Protocol):
         '''Wird vom Job nach Beendigung aufgerufen'''
         ...
 
+
 class ImportJobController():
     '''Job Controller für den Import von Dateien'''
 
@@ -70,27 +71,38 @@ class ImportJobController():
         self.job_owner = job_owner
         self.importer_clzz = importer_clzz
 
+    def exportdatum_ermitteln(self) -> None:
+        '''Ermittelt das Exportdatum der zu importierenden Datei'''
+        self.export_datum = None
+
+        select_datum_dialog = SelectDateWidget()
+        select_datum_dialog.show()
+        self.export_datum = select_datum_dialog.export_date
+
+        if not self.export_datum:
+            self.job_owner.done()
+            raise DatenImportError(f'Es wurde kein Exportdatum gewählt')
+
     def importfile_ermitteln(self, title: str, filetypes: List[Tuple[str, str]], defaultextension: str) -> None:
         '''Ermittelt die zu importierende Datei'''
 
-        self.filenames = askopenfilenames(
+        self.filenames = []
+        self.filenames.append(askopenfilename(
             title=f'Importdatei für {title} auswählen',
             defaultextension=defaultextension,
             filetypes=filetypes
-        )
+        ))
 
         if not self.filenames:
             self.job_owner.done()
             raise DatenImportError(f'Es wurde keine Eingabedatei gewählt')
-
-        self.filenames = sorted(self.filenames)
 
     def starte_import(self) -> None:
         '''Startet den Import'''
 
         queue = Queue()
         worker = Thread(target=self._run_import, args=(
-            self.importer_clzz, self.db_manager, self.filenames, queue, self.application))
+            self.importer_clzz, self.db_manager, self.filenames, queue, self.application, self.export_datum))
 
         worker.start()
         self.application.after(1, lambda: self.monitor(worker, queue))
@@ -106,23 +118,24 @@ class ImportJobController():
         else:
             if self.e:
                 self.application.log_message(
-                LogLevel.ERROR, f'Import mit Fehler beendet: {self.e}')
+                    LogLevel.ERROR, f'Import mit Fehler beendet: {self.e}')
             else:
                 self.application.log_message(
                     LogLevel.INFO, f'Import abgeschlossen')
             self.job_owner.done()
 
-    def _run_import(self, importer_clzz: Type[Importer], db_man: DbManager, files: List[str], queue: Queue, app: Controller) -> None:
+    def _run_import(self, importer_clzz: Type[Importer], db_man: DbManager, files: List[str], queue: Queue, app: Controller, export_date: date) -> None:
         '''Soll in einem Thread ausgeführt werden, verarbeitet die Dateien'''
 
         self.e = None
         try:
             for file in files:
-                imp = importer_clzz(db_man, file)
+                imp = importer_clzz(db_man, file, export_date)
                 imp.load_file()
                 queue.put(f"Datei '{file}' geladen. Schreiben gestartet...")
                 imp.write_data()
-                queue.put(f"Datei '{file}' geschrieben. Nachverarbeitung gestartet...")
+                queue.put(
+                    f"Datei '{file}' geschrieben. Nachverarbeitung gestartet...")
                 imp.post_process()
                 queue.put(f"Datei '{file}' Nachverarbeitung abgeschlossen")
         except Exception as e:

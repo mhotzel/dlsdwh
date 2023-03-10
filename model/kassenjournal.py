@@ -16,13 +16,14 @@ def date_parser(ds: str) -> datetime:
 class KassenjournalImporter():
     '''Uebernimmt den Import des Kassenjournals in die Datenbank'''
 
-    def __init__(self, db_manager: DbManager, import_file: str) -> None:
+    def __init__(self, db_manager: DbManager, import_file: str, export_date: date) -> None:
         self.db_manager = db_manager
         self.import_file = import_file
         self._listeners = set()
         self.df: pd.DataFrame = None
         self.tab_kj: Table = None
         self.tab_kjt: Table = None
+        self.export_date: date = export_date
 
     def write_data(self) -> None:
         '''
