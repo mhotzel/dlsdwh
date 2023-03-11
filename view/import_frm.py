@@ -243,10 +243,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Kassenjournale',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
     
@@ -272,10 +268,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Warengruppendaten',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
@@ -300,10 +292,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Kundendaten',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
@@ -328,10 +316,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Artikeldaten',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
@@ -356,10 +340,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Pfanddaten',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
@@ -384,10 +364,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Lieferanten',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
@@ -412,10 +388,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Mehrfach-EAN',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 
@@ -440,10 +412,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Lieferantenartikel',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
         
@@ -468,10 +436,6 @@ class ImportFrame(Frame):
             job_controller.starte_import()
 
         except DatenImportError as de:
-            showwarning(
-                title='Fehler beim Import der Presseartikel',
-                message=de.args[0]
-            )
             self.application.log_message(LogLevel.WARN, de.args[0])
             self.done()
 

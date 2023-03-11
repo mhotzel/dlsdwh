@@ -135,17 +135,39 @@ class KassenjournalImporter():
         '''Zieltabelle der Kassenjournale fuellen.'''
 
         sql = '''
-        INSERT INTO kassenjournal_t
+        INSERT INTO kassenjournal_t (hash, eintrag_ts, kasse_nr, bon_nr, pos, bon_beginn, bon_abschluss, ma, kdnr, bon_summe, typ, bon_typ, pos_typ, art_nr, art_bez, warengruppe, mwst_satz, mengenfaktor, menge, preis_einzel, preis_gesamt, infotext, storno_ref, tse_info)
         SELECT
-            kjt.*
+            kjt.hash,
+            kjt.eintrag_ts,
+            kjt.kasse_nr,
+            kjt.bon_nr,
+            kjt.pos,
+            kjt.bon_beginn,
+            kjt.bon_abschluss,
+            kjt.ma,
+            kjt.kdnr,
+            kjt.bon_summe,
+            kjt.typ,
+            kjt.bon_typ,
+            kjt.pos_typ,
+            kjt.art_nr,
+            kjt.art_bez,
+            kjt.warengruppe,
+            kjt.mwst_satz,
+            kjt.mengenfaktor,
+            kjt.menge,
+            kjt.preis_einzel,
+            kjt.preis_gesamt,
+            kjt.infotext,
+            kjt.storno_ref,
+            kjt.tse_info
             
         FROM temp_kassenjournal_t AS kjt
 
         LEFT JOIN kassenjournal_t AS kj
-            ON	kjt.kasse_nr = kj.kasse_nr
-            AND kjt.bon_nr = kj.bon_nr
+            ON	kjt.hash = kj.hash
 
-        WHERE kj.bon_nr IS NULL
+        WHERE kj.hash IS NULL
         '''
         conn.execute(text(sql))
 

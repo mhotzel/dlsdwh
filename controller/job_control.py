@@ -1,3 +1,4 @@
+from pathlib import Path
 from queue import Queue
 from threading import Thread
 from tkinter.filedialog import askopenfilename
@@ -67,7 +68,7 @@ class ImportJobController():
 
         self.application = application
         self.db_manager = db_manager
-        self.filenames = None
+        self.filename = None
         self.job_owner = job_owner
         self.importer_clzz = importer_clzz
 
@@ -86,14 +87,14 @@ class ImportJobController():
     def importfile_ermitteln(self, title: str, filetypes: List[Tuple[str, str]], defaultextension: str) -> None:
         '''Ermittelt die zu importierende Datei'''
 
-        self.filenames = []
-        self.filenames.append(askopenfilename(
+        fn = askopenfilename(
             title=f'Importdatei für {title} auswählen',
             defaultextension=defaultextension,
             filetypes=filetypes
-        ))
+        )
+        self.filename = str(Path(fn).resolve())
 
-        if not self.filenames:
+        if not self.filename:
             self.job_owner.done()
             raise DatenImportError(f'Es wurde keine Eingabedatei gewählt')
 
@@ -101,8 +102,10 @@ class ImportJobController():
         '''Startet den Import'''
 
         queue = Queue()
+        filenames = []
+        filenames.append(self.filename)
         worker = Thread(target=self._run_import, args=(
-            self.importer_clzz, self.db_manager, self.filenames, queue, self.application, self.export_datum))
+            self.importer_clzz, self.db_manager, filenames, queue, self.application, self.export_datum))
 
         worker.start()
         self.application.after(1, lambda: self.monitor(worker, queue))
@@ -121,7 +124,7 @@ class ImportJobController():
                     LogLevel.ERROR, f'Import mit Fehler beendet: {self.e}')
             else:
                 self.application.log_message(
-                    LogLevel.INFO, f'Import abgeschlossen')
+                    LogLevel.INFO, f"Import abgeschlossen: '{self.filename}")
             self.job_owner.done()
 
     def _run_import(self, importer_clzz: Type[Importer], db_man: DbManager, files: List[str], queue: Queue, app: Controller, export_date: date) -> None:
