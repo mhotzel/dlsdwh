@@ -9,7 +9,7 @@ from model.db_manager import DbManager
 from model.errors import DatenImportError
 from model.log_level import LogLevel
 from view.select_datum_frm import SelectDateWidget
-from datetime import date
+from datetime import date, datetime
 
 
 class Importer(Protocol):
@@ -72,9 +72,10 @@ class ImportJobController():
         self.job_owner = job_owner
         self.importer_clzz = importer_clzz
 
-    def exportdatum_ermitteln(self) -> None:
+    def exportdatum_ermitteln(self, export_datum: str) -> None:
         '''Ermittelt das Exportdatum der zu importierenden Datei'''
-        self.export_datum = None
+        self.export_datum = datetime.strptime(export_datum, '%d.%m.%Y').date()
+        return
 
         select_datum_dialog = SelectDateWidget()
         select_datum_dialog.show()
