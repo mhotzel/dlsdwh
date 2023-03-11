@@ -93,11 +93,12 @@ class ImportJobController():
             defaultextension=defaultextension,
             filetypes=filetypes
         )
-        self.filename = str(Path(fn).resolve())
-
-        if not self.filename:
+        self.filename = Path(fn).resolve()
+        if not self.filename.is_file():
             self.job_owner.done()
             raise DatenImportError(f'Es wurde keine Eingabedatei gewählt')
+        
+        self.filename = str(self.filename)
 
     def starte_import(self) -> None:
         '''Startet den Import'''
